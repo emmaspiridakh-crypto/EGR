@@ -560,7 +560,7 @@ async def ticketpanel(ctx):
         return await ctx.reply("Δεν έχεις δικαίωμα να στείλεις το panel.")
 
     embed = discord.Embed(
-        title="🎫 Welcome to Paradox King Remastered",
+        title="🎫 Welcome to Emergency Greece Roleplay",
         description=(
             "Για άμεση εξυπηρέτηση, επίλεξε την κατηγορία που ταιριάζει στο αίτημά σου.\n"
             "Η ομάδα μας θα σε εξυπηρετήσει το συντομότερο δυνατό."
@@ -568,8 +568,8 @@ async def ticketpanel(ctx):
         color=0x2b2d31
     )
 
-    embed.set_image(url="hhttps://i.imgur.com/oUUKZU4.png")
-    embed.set_footer(text="Paradox King Remastered • Support System")
+    embed.set_image(url="https://i.imgur.com/S6xJkcC.png")
+    embed.set_footer(text="Emergency Greece Roleplay • Support System")
 
     await ctx.send(embed=embed, view=MainTicketPanel())
     await ctx.reply("Το νέο ticket panel στάλθηκε.", delete_after=2)
@@ -585,7 +585,7 @@ async def jobpanel(ctx):
         return await ctx.reply("Δεν έχεις δικαίωμα να στείλεις το panel.")
 
     embed = discord.Embed(
-        title="📋 Paradox King Remastered — Job Tickets",
+        title="📋 Emergency Greece Roleplay — Job Tickets",
         description=(
             "Επέλεξε την κατηγορία job που ταιριάζει στο αίτημά σου.\n"
             "Η ομάδα μας θα σε εξυπηρετήσει άμεσα."
@@ -593,8 +593,8 @@ async def jobpanel(ctx):
         color=0x2b2d31
     )
 
-    embed.set_image(url="https://i.imgur.com/oUUKZU4.png")
-    embed.set_footer(text="Paradox King Remastered • Job Support")
+    embed.set_image(url="https://i.imgur.com/S6xJkcC.png")
+    embed.set_footer(text="Emergency Greece Roleplay • Job Support")
 
     await ctx.send(embed=embed, view=JobTicketPanel())
     await ctx.reply("Το νέο job ticket panel στάλθηκε.", delete_after=2)
@@ -652,6 +652,7 @@ async def on_ready():
 
 if __name__ == "__main__":
     bot.run(TOKEN)
+
 
 
 
