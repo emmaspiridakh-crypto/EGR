@@ -1,10 +1,17 @@
+# Χρησιμοποιούμε σταθερή έκδοση Python
 FROM python:3.11-slim
 
+# Ο φάκελος της εφαρμογής μέσα στο container
 WORKDIR /app
 
+# Αντιγραφή των αρχείων requirements
 COPY requirements.txt .
+
+# Εγκατάσταση των dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Αντιγραφή όλου του project
 COPY . .
 
-CMD ["python3", "bot.py"]
+# Το bot τρέχει με το bot.py
+CMD ["python", "bot.py"]
