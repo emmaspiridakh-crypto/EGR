@@ -444,7 +444,7 @@ class JobTicketPanel(discord.ui.View):
 # ============================
 
 # ΒΑΛΕ ΕΔΩ ΤΑ ROLE IDs
-STAFF_DUTY_ROLE_ID = 1476603226462748693  # Staff Duty Role
+STAFF_DUTY_ROLE_ID = 1479201103890485248  # Staff Duty Role
 
 
 # ============================
@@ -652,6 +652,7 @@ async def on_ready():
 
 if __name__ == "__main__":
     bot.run(TOKEN)
+
 
 
 
