@@ -555,6 +555,7 @@ class JobTicketPanel(discord.ui.View):
         super().__init__(timeout=None)
         self.add_item(JobTicketSelect())
 
+
 class DutyView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -562,38 +563,25 @@ class DutyView(discord.ui.View):
     @discord.ui.button(label="Go ON Duty", style=discord.ButtonStyle.green)
     async def duty_on(self, interaction: discord.Interaction, button: discord.ui.Button):
         user_id = str(interaction.user.id)
-        guild = interaction.guild
-        duty_role = guild.get_role(DUTY_ROLE_ID)
 
-        # Save duty status
         duty_data[user_id] = {
             "status": "on",
             "timestamp": time.time()
         }
         save_duty_data(duty_data)
 
-        # Give duty role
-        if duty_role:
-            try:
-                await interaction.user.add_roles(duty_role)
-            except:
-                pass
-
         await interaction.response.send_message(
             f"🟢 {interaction.user.mention} **είναι τώρα ON DUTY**.",
             ephemeral=False
         )
 
-        log = guild.get_channel(ON_OFF_DUTY_LOG_ID)
+        log = interaction.guild.get_channel(ON_OFF_DUTY_LOG_ID)
         if log:
             await log.send(f"🟢 **{interaction.user}** went **ON DUTY**.")
-
 
     @discord.ui.button(label="Go OFF Duty", style=discord.ButtonStyle.red)
     async def duty_off(self, interaction: discord.Interaction, button: discord.ui.Button):
         user_id = str(interaction.user.id)
-        guild = interaction.guild
-        duty_role = guild.get_role(DUTY_ROLE_ID)
 
         if user_id not in duty_data or duty_data[user_id]["status"] == "off":
             return await interaction.response.send_message(
@@ -605,31 +593,22 @@ class DutyView(discord.ui.View):
         end = time.time()
         total = round((end - start) / 60)
 
-        # Save duty status
         duty_data[user_id] = {
             "status": "off",
             "timestamp": 0
         }
         save_duty_data(duty_data)
 
-        # Remove duty role
-        if duty_role:
-            try:
-                await interaction.user.remove_roles(duty_role)
-            except:
-                pass
-
         await interaction.response.send_message(
             f"🔴 {interaction.user.mention} **έγινε OFF DUTY**.\n⏱ Χρόνος: **{total} λεπτά**.",
             ephemeral=False
         )
 
-        log = guild.get_channel(ON_OFF_DUTY_LOG_ID)
+        log = interaction.guild.get_channel(ON_OFF_DUTY_LOG_ID)
         if log:
             await log.send(
                 f"🔴 **{interaction.user}** went **OFF DUTY** — Time worked: **{total} minutes**."
             )
-
 # -------------------------------
 # PANEL COMMANDS
 # -------------------------------
@@ -677,9 +656,6 @@ async def jobpanel(ctx):
 
 @bot.command()
 async def dutypanel(ctx):
-    if not has_staff_permissions(ctx.author):
-        return await ctx.reply("❌ Δεν έχεις δικαίωμα να χρησιμοποιήσεις αυτή την εντολή.")
-
     embed = discord.Embed(
         title="🛡 Staff Duty Panel",
         description="Επίλεξε αν θέλεις να μπεις ON DUTY ή OFF DUTY.",
@@ -687,7 +663,21 @@ async def dutypanel(ctx):
     )
 
     await ctx.send(embed=embed, view=DutyView())
-    await ctx.reply("Το Staff Duty Panel στάλθηκε.", delete_after=2)
+
+@bot.command()
+async def dutystatus(ctx, member: discord.Member = None):
+    member = member or ctx.author
+    user_id = str(member.id)
+
+    if user_id not in duty_data or duty_data[user_id]["status"] == "off":
+        return await ctx.reply(f"🔴 **{member}** είναι **OFF DUTY**.")
+
+    start = duty_data[user_id]["timestamp"]
+    total = round((time.time() - start) / 60)
+
+    await ctx.reply(
+        f"🟢 **{member}** είναι **ON DUTY**.\n⏱ Χρόνος μέχρι τώρα: **{total} λεπτά**."
+    )
     
 # ============================================
 # SECTION 12 — MODERATION COMMANDS
@@ -951,6 +941,7 @@ keep_alive()
 
 if __name__ == "__main__":
     bot.run(TOKEN)
+
 
 
 
