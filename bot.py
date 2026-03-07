@@ -672,6 +672,20 @@ async def jobpanel(ctx):
 
     await ctx.send(embed=embed, view=JobTicketPanel())
     await ctx.reply("Το νέο job ticket panel στάλθηκε.", delete_after=2)
+
+@bot.command()
+async def dutypanel(ctx):
+    if not has_staff_permissions(ctx.author):
+        return await ctx.reply("❌ Δεν έχεις δικαίωμα να χρησιμοποιήσεις αυτή την εντολή.")
+
+    embed = discord.Embed(
+        title="🛡 Staff Duty Panel",
+        description="Επίλεξε αν θέλεις να μπεις ON DUTY ή OFF DUTY.",
+        color=discord.Color.blue()
+    )
+
+    await ctx.send(embed=embed, view=DutyView())
+    await ctx.reply("Το Staff Duty Panel στάλθηκε.", delete_after=2)
     
 # ============================================
 # SECTION 12 — MODERATION COMMANDS
@@ -935,6 +949,7 @@ keep_alive()
 
 if __name__ == "__main__":
     bot.run(TOKEN)
+
 
 
 
