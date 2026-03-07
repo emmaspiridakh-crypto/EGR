@@ -823,7 +823,7 @@ async def on_member_join(member):
     # Update counters
     await update_voice_channels(member.guild)
 
-  @bot.event
+@bot.event
 async def on_member_remove(member):
     log = bot.get_channel(MEMBER_LEAVE_LOG_CHANNEL_ID)
     if log:
@@ -860,6 +860,7 @@ keep_alive()
 
 if __name__ == "__main__":
     bot.run(TOKEN)
+
 
 
 
