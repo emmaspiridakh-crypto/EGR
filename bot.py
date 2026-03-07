@@ -1,4 +1,9 @@
+# ============================================
+# SECTION 1 — IMPORTS & FLASK KEEP_ALIVE
+# ============================================
+
 print(">>> BOT FILE LOADED <<<")
+
 import os
 import discord
 import asyncio
@@ -8,6 +13,7 @@ from discord.ext import commands
 from discord import app_commands
 from flask import Flask
 from threading import Thread
+import datetime
 
 app = Flask('')
 
@@ -23,36 +29,37 @@ def keep_alive():
     t.start()
 
 
-# ========================
-# CONFIG
-# ========================
+# ============================================
+# SECTION 2 — BOT SETUP & INTENTS
+# ============================================
 
 TOKEN = os.getenv("TOKEN")
-
-# ========================
-# INTENTS & BOT
-# ========================
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 GUILD_ID = 1469054622550462720
 
+
+# ============================================
+# SECTION 3 — IDs (ALL TOGETHER)
+# ============================================
+
 # ROLE IDs
+CEO_ID = 1469054622965567598
 OWNER_ID = 1469054622965567594
 CO_OWNER_ID = 1469054622965567593
 DEVELOPER_ID = 1469054622957305897
 ORGANIZER_ID = 1469054622957305906
 STAFF_ID = 1469054622919295216
-CIVILIAN_ORG_ID = 1469054622957305900
-CRIMINAL_ORG_ID = 1469054622957305899
+JOBORG_ID = 1469054622957305900
+
+# AUTOROLE
+AUTOROLE_ID = 1469054622906847473
 
 # CATEGORY IDs
 MAIN_TICKET_CATEGORY_ID = 1469054624077189183
 JOB_TICKET_CATEGORY_ID = 1469698048686030931
-
-# AUTOROLE
-AUTOROLE_ID = 1469054622906847473
 
 # TEMP VOICE
 TEMP_VOICE_CATEGORY_ID = 1469054624077189184
@@ -71,16 +78,24 @@ CHANNEL_DELETE_LOG_CHANNEL_ID = 1475526632193396796
 ROLE_CREATE_LOG_CHANNEL_ID = 1475520225792364716
 ROLE_DELETE_LOG_CHANNEL_ID = 1475520225792364716
 
-# ========================
-# HELPERS
-# ========================
+# VOICE COUNTER CHANNELS (ΒΑΛΕ ΕΣΥ ΤΑ IDs)
+MEMBERS_CHANNEL_ID = 1479803418296975390
+BOTS_CHANNEL_ID = 1479803516905197769
+ONLINE_CHANNEL_ID = 1479803613017542676
+BOOSTS_CHANNEL_ID = 1479803665283022880
+
+
+# ============================================
+# SECTION 4 — HELPERS
+# ============================================
 
 def is_owner_or_coowner(user: discord.Member):
     return any(r.id in (OWNER_ID, CO_OWNER_ID) for r in user.roles)
 
-# ========================
-# DUTY SYSTEM STORAGE
-# ========================
+
+# ============================================
+# SECTION 5 — DUTY SYSTEM STORAGE
+# ============================================
 
 DUTY_FILE = "duty.json"
 
@@ -97,54 +112,64 @@ def save_duty_data(data):
 
 duty_data = load_duty_data()
 
-# ========================
-# LOGGING EVENTS
-# ========================
+# ============================================
+# SECTION 6 — VOICE CHANNEL COUNTERS
+# ============================================
+
+async def update_voice_channels(guild: discord.Guild):
+    """Updates the voice channel counters in real time."""
+    
+    members = sum(1 for m in guild.members if not m.bot)
+    bots = sum(1 for m in guild.members if m.bot)
+    online = sum(1 for m in guild.members if m.status != discord.Status.offline)
+    boosts = guild.premium_subscription_count
+
+    members_ch = guild.get_channel(MEMBERS_CHANNEL_ID)
+    bots_ch = guild.get_channel(BOTS_CHANNEL_ID)
+    online_ch = guild.get_channel(ONLINE_CHANNEL_ID)
+    boosts_ch = guild.get_channel(BOOSTS_CHANNEL_ID)
+
+    if members_ch:
+        await members_ch.edit(name=f"👤 Members: {members}")
+    if bots_ch:
+        await bots_ch.edit(name=f"🤖 Bots: {bots}")
+    if online_ch:
+        await online_ch.edit(name=f"🟢 Online: {online}")
+    if boosts_ch:
+        await boosts_ch.edit(name=f"🚀 Boosts: {boosts}")
+
+
+# --- EVENTS THAT TRIGGER COUNTER UPDATE ---
 
 @bot.event
-async def on_message_edit(before, after):
-    if before.author.bot:
-        return
-    if before.content == after.content:
-        return
-
-    channel = bot.get_channel(MESSAGE_EDIT_LOG_CHANNEL_ID)
-    if channel:
-        embed = discord.Embed(
-            title="✏️ Message Edited",
-            color=discord.Color.orange()
-        )
-        embed.add_field(name="User", value=f"{before.author} ({before.author.id})", inline=False)
-        embed.add_field(name="Channel", value=before.channel.mention, inline=False)
-        embed.add_field(name="Before", value=before.content or "None", inline=False)
-        embed.add_field(name="After", value=after.content or "None", inline=False)
-        await channel.send(embed=embed)
+async def on_member_join(member):
+    await update_voice_channels(member.guild)
 
 @bot.event
-async def on_message_delete(message):
-    if message.author.bot:
-        return
+async def on_member_remove(member):
+    await update_voice_channels(member.guild)
 
-    channel = bot.get_channel(MESSAGE_DELETE_LOG_CHANNEL_ID)
-    if channel:
-        embed = discord.Embed(
-            title="🗑️ Message Deleted",
-            color=discord.Color.red()
-        )
-        embed.add_field(name="User", value=f"{message.author} ({message.author.id})", inline=False)
-        embed.add_field(name="Channel", value=message.channel.mention, inline=False)
-        embed.add_field(name="Content", value=message.content or "None", inline=False)
-        await channel.send(embed=embed)
+@bot.event
+async def on_presence_update(before, after):
+    await update_voice_channels(after.guild)
 
-# ========================
-# VOICE LOGS
-# ========================
+@bot.event
+async def on_guild_update(before, after):
+    if before.premium_subscription_count != after.premium_subscription_count:
+        await update_voice_channels(after)
+
+# ============================================
+# SECTION 7 — VOICE LOGS (JOIN / LEAVE / MOVE)
+# ============================================
 
 @bot.event
 async def on_voice_state_update(member, before, after):
     guild = member.guild
+    log = bot.get_channel(VOICE_LOG_CHANNEL_ID)
 
-    # TEMP VOICE SYSTEM
+    # ----------------------------------------
+    # TEMP VOICE SYSTEM (όπως το είχες)
+    # ----------------------------------------
     if after.channel and after.channel.id == TEMP_VOICE_CHANNEL_ID:
         category = guild.get_channel(TEMP_VOICE_CATEGORY_ID)
         temp_channel = await guild.create_voice_channel(
@@ -164,83 +189,154 @@ async def on_voice_state_update(member, before, after):
                 except:
                     pass
 
-    # VOICE LOGGING
+    # ----------------------------------------
+    # CLEAN VOICE LOGGING (όπως το ζήτησες)
+    # ----------------------------------------
+
+    # No change
     if before.channel == after.channel:
         return
 
-    channel = bot.get_channel(VOICE_LOG_CHANNEL_ID)
-    if channel:
-        embed = discord.Embed(
-            title="🎧 Voice Activity",
-            color=discord.Color.purple()
-        )
-        embed.add_field(name="User", value=f"{member} ({member.id})", inline=False)
-        embed.add_field(name="Before", value=str(before.channel), inline=False)
-        embed.add_field(name="After", value=str(after.channel), inline=False)
-        await channel.send(embed=embed)
+    # Joined voice
+    if before.channel is None and after.channel is not None:
+        if log:
+            await log.send(f"🔊 **{member}** joined **{after.channel.name}**")
+        return
+
+    # Left voice
+    if before.channel is not None and after.channel is None:
+        if log:
+            await log.send(f"🔇 **{member}** left **{before.channel.name}**")
+        return
+
+    # Moved voice
+    if before.channel is not None and after.channel is not None:
+        if log:
+            await log.send(
+                f"🔁 **{member}** moved from **{before.channel.name}** to **{after.channel.name}**"
+            )
+        return
+
+# ============================================
+# SECTION 8 — ROLE LOGS (CREATE / DELETE / ADD / REMOVE)
+# ============================================
+
+# --- ROLE CREATED ---
+@bot.event
+async def on_guild_role_create(role):
+    log = bot.get_channel(ROLE_CREATE_LOG_CHANNEL_ID)
+    if log:
+        await log.send(f"🆕 Role created: **{role.name}**")
 
 
-# ========================
-# CHANNEL CREATE / DELETE
-# ========================
+# --- ROLE DELETED ---
+@bot.event
+async def on_guild_role_delete(role):
+    log = bot.get_channel(ROLE_DELETE_LOG_CHANNEL_ID)
+    if log:
+        await log.send(f"🗑️ Role deleted: **{role.name}**")
+
+
+# --- ROLE ADDED / REMOVED FROM MEMBER ---
+@bot.event
+async def on_member_update(before, after):
+    guild = after.guild
+    log = bot.get_channel(ROLE_UPDATE_LOG_CHANNEL_ID)
+
+    # ROLE ADDED
+    if len(after.roles) > len(before.roles):
+        new_role = next(role for role in after.roles if role not in before.roles)
+
+        async for entry in guild.audit_logs(limit=5, action=discord.AuditLogAction.member_role_update):
+            if entry.target.id == after.id:
+                if log:
+                    await log.send(
+                        f"➕ **{entry.user}** added role **{new_role.name}** to **{after}**"
+                    )
+                break
+
+    # ROLE REMOVED
+    elif len(after.roles) < len(before.roles):
+        removed_role = next(role for role in before.roles if role not in after.roles)
+
+        async for entry in guild.audit_logs(limit=5, action=discord.AuditLogAction.member_role_update):
+            if entry.target.id == after.id:
+                if log:
+                    await log.send(
+                        f"➖ **{entry.user}** removed role **{removed_role.name}** from **{after}**"
+                    )
+                break
+
+# ============================================
+# SECTION 9 — CHANNEL LOGS (CREATE / DELETE)
+# ============================================
 
 @bot.event
 async def on_guild_channel_create(channel):
     log = bot.get_channel(CHANNEL_CREATE_LOG_CHANNEL_ID)
     if log:
-        embed = discord.Embed(
-            title="📁 Channel Created",
-            color=discord.Color.green()
+        await log.send(
+            f"📁 Channel created: **{channel.name}** "
+            f"(Type: {str(channel.type).title()})"
         )
-        embed.add_field(name="Name", value=channel.name, inline=False)
-        embed.add_field(name="Type", value=str(channel.type), inline=False)
-        await log.send(embed=embed)
 
 
 @bot.event
 async def on_guild_channel_delete(channel):
     log = bot.get_channel(CHANNEL_DELETE_LOG_CHANNEL_ID)
     if log:
-        embed = discord.Embed(
-            title="🗑️ Channel Deleted",
-            color=discord.Color.red()
+        await log.send(
+            f"🗑️ Channel deleted: **{channel.name}** "
+            f"(Type: {str(channel.type).title()})"
         )
-        embed.add_field(name="Name", value=channel.name, inline=False)
-        embed.add_field(name="Type", value=str(channel.type), inline=False)
-        await log.send(embed=embed)
 
-
-# ========================
-# ROLE CREATE / DELETE
-# ========================
+# ============================================
+# SECTION 10 — MESSAGE LOGS (EDIT / DELETE)
+# ============================================
 
 @bot.event
-async def on_guild_role_create(role):
-    log = bot.get_channel(ROLE_CREATE_LOG_CHANNEL_ID)
+async def on_message_edit(before, after):
+    if before.author.bot:
+        return
+    if before.content == after.content:
+        return
+
+    log = bot.get_channel(MESSAGE_EDIT_LOG_CHANNEL_ID)
     if log:
         embed = discord.Embed(
-            title="🎨 Role Created",
-            color=discord.Color.green()
+            title="✏️ Message Edited",
+            color=discord.Color.orange()
         )
-        embed.add_field(name="Role", value=role.mention, inline=False)
+        embed.add_field(name="User", value=f"{before.author} ({before.author.id})", inline=False)
+        embed.add_field(name="Channel", value=before.channel.mention, inline=False)
+        embed.add_field(name="Before", value=before.content or "None", inline=False)
+        embed.add_field(name="After", value=after.content or "None", inline=False)
         await log.send(embed=embed)
 
 
 @bot.event
-async def on_guild_role_delete(role):
-    log = bot.get_channel(ROLE_DELETE_LOG_CHANNEL_ID)
+async def on_message_delete(message):
+    if message.author.bot:
+        return
+
+    log = bot.get_channel(MESSAGE_DELETE_LOG_CHANNEL_ID)
     if log:
         embed = discord.Embed(
-            title="🗑️ Role Deleted",
+            title="🗑️ Message Deleted",
             color=discord.Color.red()
         )
-        embed.add_field(name="Role Name", value=role.name, inline=False)
+        embed.add_field(name="User", value=f"{message.author} ({message.author.id})", inline=False)
+        embed.add_field(name="Channel", value=message.channel.mention, inline=False)
+        embed.add_field(name="Content", value=message.content or "None", inline=False)
         await log.send(embed=embed)
 
+# ============================================
+# SECTION 11 — TICKET SYSTEM
+# ============================================
 
-# ========================
+# -------------------------------
 # CLOSE BUTTON VIEW
-# ========================
+# -------------------------------
 
 class TicketCloseView(discord.ui.View):
     def __init__(self):
@@ -273,9 +369,10 @@ class TicketCloseView(discord.ui.View):
         except:
             pass
 
-# ============================
-# SUPPORT TICKET PANEL
-# ============================
+
+# -------------------------------
+# MAIN TICKET PANEL
+# -------------------------------
 
 class MainTicketSelect(discord.ui.Select):
     def __init__(self):
@@ -371,9 +468,9 @@ class MainTicketPanel(discord.ui.View):
         self.add_item(MainTicketSelect())
 
 
-# ============================
+# -------------------------------
 # JOB TICKET PANEL
-# ============================
+# -------------------------------
 
 class JobTicketSelect(discord.ui.Select):
     def __init__(self):
@@ -402,11 +499,11 @@ class JobTicketSelect(discord.ui.Select):
         }
 
         if self.values[0] == "Civilian Job":
-            roles_ids = [CIVILIAN_ORG_ID]
+            roles_ids = [JOBORG_ID]
             name = f"civilian-{author.name}".replace(" ", "-").lower()
             ticket_type = "Civilian Job"
         else:
-            roles_ids = [CRIMINAL_ORG_ID]
+            roles_ids = [JOBORG_ID]
             name = f"criminal-{author.name}".replace(" ", "-").lower()
             ticket_type = "Criminal Job"
 
@@ -427,7 +524,7 @@ class JobTicketSelect(discord.ui.Select):
         embed = discord.Embed(
             title=f"🎫 Ticket από {author.name}",
             description=f"{author.mention} άνοιξε **{ticket_type}**.\n"
-                        f"Παρακαλώ περιμένετε να σας εξυπηρετήσει ένας Organizer.",
+                        f"Παρακαλώ περιμένετε να σας εξυπηρετήσει ένας Managers.",
             color=discord.Color.green()
         )
 
@@ -455,120 +552,10 @@ class JobTicketPanel(discord.ui.View):
         super().__init__(timeout=None)
         self.add_item(JobTicketSelect())
 
-# ============================
-# ON-DUTY SYSTEM (STAFF)
-# ============================
 
-# ΒΑΛΕ ΕΔΩ ΤΑ ROLE IDs
-STAFF_DUTY_ROLE_ID = 1479201103890485248  # Staff Duty Role
-
-
-# ============================
-# STAFF DUTY PANEL
-# ============================
-
-class StaffDutyView(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=None)
-
-    @discord.ui.button(label="On Duty", style=discord.ButtonStyle.green)
-    async def staff_on(self, interaction: discord.Interaction, button: discord.ui.Button):
-        role = interaction.guild.get_role(STAFF_DUTY_ROLE_ID)
-        if not role:
-            return await interaction.response.send_message("❌ Ο ρόλος Staff Duty δεν βρέθηκε.", ephemeral=True)
-
-        member = interaction.user
-
-        if role in member.roles:
-            return await interaction.response.send_message("Είσαι ήδη **On Duty**.", ephemeral=True)
-
-        await member.add_roles(role)
-
-        # Start tracking time
-        duty_data[str(member.id)] = duty_data.get(str(member.id), {"hours": 0, "start": None})
-        duty_data[str(member.id)]["start"] = time.time()
-        save_duty_data(duty_data)
-
-        await interaction.response.send_message("🟩 Μπήκες **On Duty**.", ephemeral=True)
-
-    @discord.ui.button(label="Off Duty", style=discord.ButtonStyle.red)
-    async def staff_off(self, interaction: discord.Interaction, button: discord.ui.Button):
-        role = interaction.guild.get_role(STAFF_DUTY_ROLE_ID)
-        if not role:
-            return await interaction.response.send_message("❌ Ο ρόλος Staff Duty δεν βρέθηκε.", ephemeral=True)
-
-        member = interaction.user
-
-        if role not in member.roles:
-            return await interaction.response.send_message("Δεν είσαι **On Duty**.", ephemeral=True)
-
-        await member.remove_roles(role)
-
-        # Calculate hours
-        entry = duty_data.get(str(member.id))
-        if entry and entry["start"]:
-            elapsed = (time.time() - entry["start"]) / 3600
-            entry["hours"] += elapsed
-            entry["start"] = None
-            save_duty_data(duty_data)
-
-        await interaction.response.send_message("🟥 Βγήκες **Off Duty**.", ephemeral=True)
-
-    @discord.ui.button(label="Duty Stats", style=discord.ButtonStyle.blurple)
-    async def staff_stats(self, interaction: discord.Interaction, button: discord.ui.Button):
-        embed = discord.Embed(
-            title="📊 Staff Duty Stats",
-            color=discord.Color.blurple()
-        )
-
-        for uid, info in duty_data.items():
-            member = interaction.guild.get_member(int(uid))
-            if not member:
-                continue
-
-            hours = info["hours"]
-            if info["start"]:
-                hours += (time.time() - info["start"]) / 3600
-
-            embed.add_field(
-                name=member.name,
-                value=f"{hours:.2f} ώρες",
-                inline=False
-            )
-
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
-
-# ========================
-# COMMANDS
-# ========================
-
-@bot.command()
-async def say(ctx, *, message: str):
-    if not is_owner_or_coowner(ctx.author):
-        return await ctx.reply("Δεν έχεις δικαίωμα να χρησιμοποιήσεις αυτή την εντολή.")
-    await ctx.send(message)
-
-
-@bot.command()
-async def dmall(ctx, *, message: str):
-    if not is_owner_or_coowner(ctx.author):
-        return await ctx.reply("Δεν έχεις δικαίωμα να χρησιμοποιήσεις αυτή την εντολή.")
-    sent = 0
-    for member in ctx.guild.members:
-        if member.bot:
-            continue
-        try:
-            await member.send(message)
-            sent += 1
-        except:
-            continue
-    await ctx.reply(f"Το μήνυμα στάλθηκε σε {sent} μέλη.")
-
-
-# ========================
-# SUPPORT PANEL COMMAND
-# ========================
+# -------------------------------
+# PANEL COMMANDS
+# -------------------------------
 
 @bot.command()
 async def ticketpanel(ctx):
@@ -591,10 +578,6 @@ async def ticketpanel(ctx):
     await ctx.reply("Το νέο ticket panel στάλθηκε.", delete_after=2)
 
 
-# ========================
-# JOB PANEL COMMAND
-# ========================
-
 @bot.command()
 async def jobpanel(ctx):
     if not is_owner_or_coowner(ctx.author):
@@ -614,83 +597,269 @@ async def jobpanel(ctx):
 
     await ctx.send(embed=embed, view=JobTicketPanel())
     await ctx.reply("Το νέο job ticket panel στάλθηκε.", delete_after=2)
+    
+# ============================================
+# SECTION 12 — MODERATION COMMANDS
+# ============================================
 
-
-# ========================
-# WHITELIST PANEL COMMAND
-# ========================
-
-@bot.command()
-async def whitelistpanel(ctx):
-    if not is_owner_or_coowner(ctx.author):
-        return await ctx.reply("Δεν έχεις δικαίωμα να στείλεις το panel.")
-
-    embed = discord.Embed(
-        title="📋 Whitelist Application",
-        description="Πάτησε το κουμπί για να κάνεις αίτηση whitelist.",
-        color=discord.Color.green()
+def has_staff_permissions(member: discord.Member):
+    """Checks if user has moderation permissions."""
+    return (
+        member.guild_permissions.kick_members or
+        member.guild_permissions.ban_members or
+        any(r.id in (STAFF_ID, ORGANIZER_ID, OWNER_ID, CO_OWNER_ID, CEO_ID) for r in member.roles)
     )
 
-    await ctx.send(embed=embed, view=WhitelistApplyButton())
-    await ctx.reply("Το whitelist panel στάλθηκε.", delete_after=2)
 
-
-# ========================
-# STAFF DUTY PANEL COMMAND
-# ========================
+# -------------------------------
+# BAN COMMAND
+# -------------------------------
 
 @bot.command()
-async def staffduty(ctx):
+async def ban(ctx, member: discord.Member = None, *, reason="No reason provided"):
+    if not has_staff_permissions(ctx.author):
+        return await ctx.reply("❌ Δεν έχεις δικαίωμα να κάνεις ban.")
+
+    if not member:
+        return await ctx.reply("Πρέπει να γράψεις ποιον θέλεις να κάνεις ban.")
+
+    await member.ban(reason=reason)
+    await ctx.reply(f"🔨 Ο χρήστης **{member}** έγινε ban.")
+
+    log = bot.get_channel(LOG_CHANNEL_ID)
+    if log:
+        await log.send(f"🔨 **{ctx.author}** banned **{member}** — Reason: {reason}")
+
+
+# -------------------------------
+# KICK COMMAND
+# -------------------------------
+
+@bot.command()
+async def kick(ctx, member: discord.Member = None, *, reason="No reason provided"):
+    if not has_staff_permissions(ctx.author):
+        return await ctx.reply("❌ Δεν έχεις δικαίωμα να κάνεις kick.")
+
+    if not member:
+        return await ctx.reply("Πρέπει να γράψεις ποιον θέλεις να κάνεις kick.")
+
+    await member.kick(reason=reason)
+    await ctx.reply(f"👢 Ο χρήστης **{member}** έγινε kick.")
+
+    log = bot.get_channel(LOG_CHANNEL_ID)
+    if log:
+        await log.send(f"👢 **{ctx.author}** kicked **{member}** — Reason: {reason}")
+
+
+# -------------------------------
+# TIMEOUT COMMAND
+# -------------------------------
+
+@bot.command()
+async def timeout(ctx, member: discord.Member = None, minutes: int = None, *, reason="No reason provided"):
+    if not has_staff_permissions(ctx.author):
+        return await ctx.reply("❌ Δεν έχεις δικαίωμα να κάνεις timeout.")
+
+    if not member or not minutes:
+        return await ctx.reply("Χρήση: `!timeout @user <minutes> <reason>`")
+
+    duration = datetime.timedelta(minutes=minutes)
+    await member.timeout(duration, reason=reason)
+
+    await ctx.reply(f"⏳ Ο χρήστης **{member}** μπήκε timeout για {minutes} λεπτά.")
+
+    log = bot.get_channel(LOG_CHANNEL_ID)
+    if log:
+        await log.send(
+            f"⏳ **{ctx.author}** timed out **{member}** for **{minutes} minutes** — Reason: {reason}"
+        )
+
+
+# -------------------------------
+# CLEAR MESSAGES COMMAND
+# -------------------------------
+
+@bot.command()
+async def clearmessage(ctx, amount: int = None):
+    if not has_staff_permissions(ctx.author):
+        return await ctx.reply("❌ Δεν έχεις δικαίωμα να κάνεις clear.")
+
+    if not amount:
+        return await ctx.reply("Χρήση: `!clearmessage <amount>`")
+
+    await ctx.channel.purge(limit=amount + 1)
+    await ctx.send(f"🧹 Διαγράφηκαν **{amount}** μηνύματα.", delete_after=3)
+
+    log = bot.get_channel(LOG_CHANNEL_ID)
+    if log:
+        await log.send(f"🧹 **{ctx.author}** cleared **{amount}** messages in {ctx.channel.mention}")
+
+# ============================================
+# SECTION 13 — UTILITY COMMANDS
+# ============================================
+
+# -------------------------------
+# SAY COMMAND (Owner + Co-Owner)
+# -------------------------------
+
+@bot.command()
+async def say(ctx, *, message: str):
     if not is_owner_or_coowner(ctx.author):
-        return await ctx.reply("Δεν έχεις δικαίωμα.")
+        return await ctx.reply("❌ Δεν έχεις δικαίωμα να χρησιμοποιήσεις αυτή την εντολή.")
+    await ctx.send(message)
+
+
+# -------------------------------
+# DMALL COMMAND (ONLY CEO)
+# -------------------------------
+
+@bot.command()
+async def dmall(ctx, *, message: str):
+    # CEO ONLY
+    ceo_role = ctx.guild.get_role(CO_OWNER_ID)  # Αν έχεις άλλο CEO role, άλλαξέ το εδώ
+
+    if ceo_role not in ctx.author.roles:
+        return await ctx.reply("❌ Μόνο ο CEO μπορεί να χρησιμοποιήσει αυτή την εντολή.")
+
+    sent = 0
+    for member in ctx.guild.members:
+        if member.bot:
+            continue
+        try:
+            await member.send(message)
+            sent += 1
+        except:
+            continue
+
+    await ctx.reply(f"📨 Το μήνυμα στάλθηκε σε **{sent}** μέλη.")
+
+
+# -------------------------------
+# SERVER STATUS COMMAND
+# -------------------------------
+
+@bot.command()
+async def serverstatus(ctx):
+    guild = ctx.guild
+
+    members = sum(1 for m in guild.members if not m.bot)
+    bots = sum(1 for m in guild.members if m.bot)
+    online = sum(1 for m in guild.members if m.status != discord.Status.offline)
+    boosts = guild.premium_subscription_count
 
     embed = discord.Embed(
-        title="🟩 Staff On-Off-Duty Panel",
-        description="Πάτησε ένα κουμπί:",
-        color=discord.Color.green()
+        title="📊 Server Status",
+        color=discord.Color.blurple()
     )
 
-    await ctx.send(embed=embed, view=StaffDutyView())
-    await ctx.reply("Το Staff Duty Panel στάλθηκε.", delete_after=2)
+    embed.add_field(name="👤 Members", value=members)
+    embed.add_field(name="🤖 Bots", value=bots)
+    embed.add_field(name="🟢 Online", value=online)
+    embed.add_field(name="🚀 Boosts", value=boosts)
 
-# ================================
-# EVENTS
-# ================================
+    await ctx.reply(embed=embed)
+
+
+# -------------------------------
+# PANEL COMMAND (SHOW ALL COMMANDS)
+# -------------------------------
+
+@bot.command()
+async def panel(ctx):
+    if not is_owner_or_coowner(ctx.author):
+        return await ctx.reply("❌ Δεν έχεις δικαίωμα να χρησιμοποιήσεις αυτή την εντολή.")
+
+    embed = discord.Embed(
+        title="📌 Emergency Greece Roleplay — Command Panel",
+        description="Όλες οι βασικές εντολές του bot.",
+        color=discord.Color.dark_gray()
+    )
+
+    embed.add_field(
+        name="🛠 Moderation",
+        value="`!ban`, `!kick`, `!timeout`, `!clearmessage`",
+        inline=False
+    )
+
+    embed.add_field(
+        name="🎫 Tickets",
+        value="`!ticketpanel`, `!jobpanel`",
+        inline=False
+    )
+
+    embed.add_field(
+        name="📊 Info",
+        value="`!serverstatus`",
+        inline=False
+    )
+
+    embed.add_field(
+        name="🧰 Utility",
+        value="`!say`, `!dmall`",
+        inline=False
+    )
+
+    await ctx.reply(embed=embed)
+
+# ============================================
+# SECTION 14 — AUTOROLE (ON MEMBER JOIN)
+# ============================================
+
+@bot.event
+async def on_member_join(member):
+    # Autorole
+    role = member.guild.get_role(AUTOROLE_ID)
+    if role:
+        try:
+            await member.add_roles(role)
+        except:
+            pass
+
+    # Log join
+    log = bot.get_channel(MEMBER_JOIN_LOG_CHANNEL_ID)
+    if log:
+        await log.send(f"🟢 **{member}** joined the server.")
+
+    # Update counters
+    await update_voice_channels(member.guild)
+
+  @bot.event
+async def on_member_remove(member):
+    log = bot.get_channel(MEMBER_LEAVE_LOG_CHANNEL_ID)
+    if log:
+        await log.send(f"🔴 **{member}** left the server.")
+
+    # Update counters
+    await update_voice_channels(member.guild)
+
+# ============================================
+# SECTION 15 — ON_READY
+# ============================================
 
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
 
+    guild = bot.get_guild(GUILD_ID)
+    if guild:
+        # Update counters on startup
+        await update_voice_channels(guild)
 
-# ================================
-# START BOT
-# ================================
+    # Set bot status
+    await bot.change_presence(
+        activity=discord.Game(name="Emergency Greece Roleplay")
+    )
+
+    print("Bot is fully online and ready.")
+
+# ============================================
+# SECTION 16 — START BOT
+# ============================================
 
 keep_alive()
+
 if __name__ == "__main__":
     bot.run(TOKEN)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
