@@ -492,7 +492,7 @@ class JobTicketSelect(discord.ui.Select):
         guild = interaction.guild
         author = interaction.user
 
-        category = guild.get_channel(TICKET_LOG_ID)
+        category = guild.get_channel(JOB_TICKET_CATEGORY_ID)
         if not category:
             return await interaction.response.send_message("Η job ticket κατηγορία δεν βρέθηκε.", ephemeral=True)
 
@@ -971,6 +971,7 @@ keep_alive()
 
 if __name__ == "__main__":
     bot.run(TOKEN)
+
 
 
 
