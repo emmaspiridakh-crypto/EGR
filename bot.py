@@ -67,7 +67,8 @@ TEMP_VOICE_CATEGORY_ID = 1469054624077189184
 TEMP_VOICE_CHANNEL_ID = 1469054624077189187
 
 # LOG CHANNELS
-LOG_CHANNEL_ID = 1474026151004340336
+ON_OFF_DUTY_LOG_ID = 1479821888598573098
+BOT_LOG_ID = 1479821247675105461
 MESSAGE_EDIT_LOG_CHANNEL_ID = 1475520124894052465
 MESSAGE_DELETE_LOG_CHANNEL_ID = 1475520124894052465
 MEMBER_JOIN_LOG_CHANNEL_ID = 1475519852163895552
@@ -78,6 +79,7 @@ CHANNEL_CREATE_LOG_CHANNEL_ID = 1475526632193396796
 CHANNEL_DELETE_LOG_CHANNEL_ID = 1475526632193396796
 ROLE_CREATE_LOG_CHANNEL_ID = 1475520225792364716
 ROLE_DELETE_LOG_CHANNEL_ID = 1475520225792364716
+TICKET_LOG_ID = 1474026151004340336
 
 # VOICE COUNTER CHANNELS (ΒΑΛΕ ΕΣΥ ΤΑ IDs)
 MEMBERS_CHANNEL_ID = 1479803418296975390
@@ -347,7 +349,7 @@ class TicketCloseView(discord.ui.View):
     async def close_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
 
         guild = interaction.guild
-        log_channel = guild.get_channel(LOG_CHANNEL_ID)
+        log_channel = guild.get_channel(TICKET_LOG_ID)
 
         # LOG CLOSE
         if log_channel:
@@ -446,7 +448,7 @@ class MainTicketSelect(discord.ui.Select):
 
         await channel.send(embed=embed, view=TicketCloseView())
 
-        log_channel = guild.get_channel(LOG_CHANNEL_ID)
+        log_channel = guild.get_channel(TICKET_LOG_ID)
         if log_channel:
             log_embed = discord.Embed(
                 title="📂 Νέο Ticket",
@@ -490,7 +492,7 @@ class JobTicketSelect(discord.ui.Select):
         guild = interaction.guild
         author = interaction.user
 
-        category = guild.get_channel(JOB_TICKET_CATEGORY_ID)
+        category = guild.get_channel(TICKET_LOG_ID)
         if not category:
             return await interaction.response.send_message("Η job ticket κατηγορία δεν βρέθηκε.", ephemeral=True)
 
@@ -531,7 +533,7 @@ class JobTicketSelect(discord.ui.Select):
 
         await channel.send(embed=embed, view=TicketCloseView())
 
-        log_channel = guild.get_channel(LOG_CHANNEL_ID)
+        log_channel = guild.get_channel(TICKET_LOG_ID)
         if log_channel:
             log_embed = discord.Embed(
                 title="📂 Νέο Ticket",
@@ -582,7 +584,7 @@ class DutyView(discord.ui.View):
             ephemeral=False
         )
 
-        log = guild.get_channel(LOG_CHANNEL_ID)
+        log = guild.get_channel(ON_OFF_DUTY_LOG_ID)
         if log:
             await log.send(f"🟢 **{interaction.user}** went **ON DUTY**.")
 
@@ -622,7 +624,7 @@ class DutyView(discord.ui.View):
             ephemeral=False
         )
 
-        log = guild.get_channel(LOG_CHANNEL_ID)
+        log = guild.get_channel(ON_OFF_DUTY_LOG_ID)
         if log:
             await log.send(
                 f"🔴 **{interaction.user}** went **OFF DUTY** — Time worked: **{total} minutes**."
@@ -715,7 +717,7 @@ async def ban(ctx, member: discord.Member = None, *, reason="No reason provided"
     await member.ban(reason=reason)
     await ctx.reply(f"🔨 Ο χρήστης **{member}** έγινε ban.")
 
-    log = bot.get_channel(LOG_CHANNEL_ID)
+    log = bot.get_channel(BOT_LOG_ID)
     if log:
         await log.send(f"🔨 **{ctx.author}** banned **{member}** — Reason: {reason}")
 
@@ -735,7 +737,7 @@ async def kick(ctx, member: discord.Member = None, *, reason="No reason provided
     await member.kick(reason=reason)
     await ctx.reply(f"👢 Ο χρήστης **{member}** έγινε kick.")
 
-    log = bot.get_channel(LOG_CHANNEL_ID)
+    log = bot.get_channel(BOT_LOG_ID)
     if log:
         await log.send(f"👢 **{ctx.author}** kicked **{member}** — Reason: {reason}")
 
@@ -757,7 +759,7 @@ async def timeout(ctx, member: discord.Member = None, minutes: int = None, *, re
 
     await ctx.reply(f"⏳ Ο χρήστης **{member}** μπήκε timeout για {minutes} λεπτά.")
 
-    log = bot.get_channel(LOG_CHANNEL_ID)
+    log = bot.get_channel(BOT_LOG_ID)
     if log:
         await log.send(
             f"⏳ **{ctx.author}** timed out **{member}** for **{minutes} minutes** — Reason: {reason}"
@@ -779,7 +781,7 @@ async def clearmessage(ctx, amount: int = None):
     await ctx.channel.purge(limit=amount + 1)
     await ctx.send(f"🧹 Διαγράφηκαν **{amount}** μηνύματα.", delete_after=3)
 
-    log = bot.get_channel(LOG_CHANNEL_ID)
+    log = bot.get_channel(BOT_LOG_ID)
     if log:
         await log.send(f"🧹 **{ctx.author}** cleared **{amount}** messages in {ctx.channel.mention}")
 
@@ -949,6 +951,7 @@ keep_alive()
 
 if __name__ == "__main__":
     bot.run(TOKEN)
+
 
 
 
