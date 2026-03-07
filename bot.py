@@ -555,14 +555,20 @@ class JobTicketPanel(discord.ui.View):
         super().__init__(timeout=None)
         self.add_item(JobTicketSelect())
 
-
 class DutyView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
+    # ============================
+    # ON DUTY BUTTON
+    # ============================
     @discord.ui.button(label="Go ON Duty", style=discord.ButtonStyle.green)
     async def duty_on(self, interaction: discord.Interaction, button: discord.ui.Button):
-        user_id = str(interaction.user.id)
+        user = interaction.user
+        guild = interaction.guild
+        duty_role = guild.get_role(DUTY_ROLE_ID)
+
+        user_id = str(user.id)
 
         duty_data[user_id] = {
             "status": "on",
@@ -570,18 +576,27 @@ class DutyView(discord.ui.View):
         }
         save_duty_data(duty_data)
 
+        if duty_role:
+            try:
+                await user.add_roles(duty_role)
+            except:
+                pass
+
         await interaction.response.send_message(
-            f"🟢 {interaction.user.mention} **είναι τώρα ON DUTY**.",
-            ephemeral=False
+            f"🟢 {user.mention}, είσαι τώρα **ON DUTY**.",
+            ephemeral=True
         )
 
-        log = interaction.guild.get_channel(ON_OFF_DUTY_LOG_ID)
-        if log:
-            await log.send(f"🟢 **{interaction.user}** went **ON DUTY**.")
-
+    # ============================
+    # OFF DUTY BUTTON
+    # ============================
     @discord.ui.button(label="Go OFF Duty", style=discord.ButtonStyle.red)
     async def duty_off(self, interaction: discord.Interaction, button: discord.ui.Button):
-        user_id = str(interaction.user.id)
+        user = interaction.user
+        guild = interaction.guild
+        duty_role = guild.get_role(DUTY_ROLE_ID)
+
+        user_id = str(user.id)
 
         if user_id not in duty_data or duty_data[user_id]["status"] == "off":
             return await interaction.response.send_message(
@@ -590,8 +605,7 @@ class DutyView(discord.ui.View):
             )
 
         start = duty_data[user_id]["timestamp"]
-        end = time.time()
-        total = round((end - start) / 60)
+        total_minutes = round((time.time() - start) / 60)
 
         duty_data[user_id] = {
             "status": "off",
@@ -599,16 +613,43 @@ class DutyView(discord.ui.View):
         }
         save_duty_data(duty_data)
 
+        if duty_role:
+            try:
+                await user.remove_roles(duty_role)
+            except:
+                pass
+
         await interaction.response.send_message(
-            f"🔴 {interaction.user.mention} **έγινε OFF DUTY**.\n⏱ Χρόνος: **{total} λεπτά**.",
-            ephemeral=False
+            f"🔴 {user.mention}, έγινες **OFF DUTY**.\n⏱ Χρόνος: **{total_minutes} λεπτά**.",
+            ephemeral=True
         )
 
-        log = interaction.guild.get_channel(ON_OFF_DUTY_LOG_ID)
-        if log:
-            await log.send(
-                f"🔴 **{interaction.user}** went **OFF DUTY** — Time worked: **{total} minutes**."
-            )
+    # ============================
+    # DUTY STATUS BUTTON
+    # ============================
+        
+    @discord.ui.button(label="Duty Status", style=discord.ButtonStyle.blurple)
+    async def duty_status(self, interaction: discord.Interaction, button: discord.ui.Button):
+        guild = interaction.guild
+
+        on_duty_users = []
+        for uid, data in duty_data.items():
+            if data["status"] == "on":
+                member = guild.get_member(int(uid))
+                if member:
+                    minutes = round((time.time() - data["timestamp"]) / 60)
+                    on_duty_users.append(f"• {member.mention} — {minutes} λεπτά")
+
+        if not on_duty_users:
+            msg = "Κανένας δεν είναι ON DUTY αυτή τη στιγμή."
+        else:
+            msg = "\n".join(on_duty_users)
+
+        await interaction.response.send_message(
+            f"📊 **Duty Status:**\n{msg}",
+            ephemeral=True
+        )
+
 # -------------------------------
 # PANEL COMMANDS
 # -------------------------------
@@ -658,26 +699,12 @@ async def jobpanel(ctx):
 async def dutypanel(ctx):
     embed = discord.Embed(
         title="🛡 Staff Duty Panel",
-        description="Επίλεξε αν θέλεις να μπεις ON DUTY ή OFF DUTY.",
+        description="Επίλεξε ON DUTY / OFF DUTY ή δες ποιοι είναι μέσα.",
         color=discord.Color.blue()
     )
 
     await ctx.send(embed=embed, view=DutyView())
 
-@bot.command()
-async def dutystatus(ctx, member: discord.Member = None):
-    member = member or ctx.author
-    user_id = str(member.id)
-
-    if user_id not in duty_data or duty_data[user_id]["status"] == "off":
-        return await ctx.reply(f"🔴 **{member}** είναι **OFF DUTY**.")
-
-    start = duty_data[user_id]["timestamp"]
-    total = round((time.time() - start) / 60)
-
-    await ctx.reply(
-        f"🟢 **{member}** είναι **ON DUTY**.\n⏱ Χρόνος μέχρι τώρα: **{total} λεπτά**."
-    )
     
 # ============================================
 # SECTION 12 — MODERATION COMMANDS
@@ -797,7 +824,7 @@ async def say(ctx, *, message: str):
 @bot.command()
 async def dmall(ctx, *, message: str):
     # CEO ONLY
-    ceo_role = ctx.guild.get_role(CO_OWNER_ID)  # Αν έχεις άλλο CEO role, άλλαξέ το εδώ
+    ceo_role = ctx.guild.get_role(CEO_ID)  # Αν έχεις άλλο CEO role, άλλαξέ το εδώ
 
     if ceo_role not in ctx.author.roles:
         return await ctx.reply("❌ Μόνο ο CEO μπορεί να χρησιμοποιήσει αυτή την εντολή.")
@@ -920,6 +947,9 @@ async def on_member_remove(member):
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
+    
+    bot.add_view(JobTicketPanel())
+    bot.add_view(DutyView())
 
     guild = bot.get_guild(GUILD_ID)
     if guild:
@@ -932,7 +962,7 @@ async def on_ready():
     )
 
     print("Bot is fully online and ready.")
-
+   
 # ============================================
 # SECTION 16 — START BOT
 # ============================================
@@ -941,6 +971,7 @@ keep_alive()
 
 if __name__ == "__main__":
     bot.run(TOKEN)
+
 
 
 
