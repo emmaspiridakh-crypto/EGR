@@ -167,8 +167,45 @@ async def on_guild_update(before, after):
 
 @bot.event
 async def on_voice_state_update(member, before, after):
-    guild = member.guild
     log = bot.get_channel(VOICE_LOG_CHANNEL_ID)
+    if not log:
+        return
+
+    # --- USER JOINED VOICE ---
+    if before.channel is None and after.channel is not None:
+        embed = discord.Embed(
+            title="🔊 Voice Join",
+            description=f"**{member.mention}** joined **{after.channel.name}**",
+            color=discord.Color.green()
+        )
+        embed.set_thumbnail(url=member.avatar)
+        embed.set_footer(text=f"User ID: {member.id}")
+        await log.send(embed=embed)
+
+    # --- USER LEFT VOICE ---
+    elif before.channel is not None and after.channel is None:
+        embed = discord.Embed(
+            title="🔇 Voice Leave",
+            description=f"**{member.mention}** left **{before.channel.name}**",
+            color=discord.Color.red()
+        )
+        embed.set_thumbnail(url=member.avatar)
+        embed.set_footer(text=f"User ID: {member.id}")
+        await log.send(embed=embed)
+
+    # --- USER MOVED VOICE CHANNEL ---
+    elif before.channel != after.channel:
+        embed = discord.Embed(
+            title="🔁 Voice Move",
+            description=(
+                f"**{member.mention}** moved from **{before.channel.name}** "
+                f"to **{after.channel.name}**"
+            ),
+            color=discord.Color.yellow()
+        )
+        embed.set_thumbnail(url=member.avatar)
+        embed.set_footer(text=f"User ID: {member.id}")
+        await log.send(embed=embed)
 
     # ----------------------------------------
     # TEMP VOICE SYSTEM (όπως το είχες)
@@ -224,23 +261,30 @@ async def on_voice_state_update(member, before, after):
 # SECTION 8 — ROLE LOGS (CREATE / DELETE / ADD / REMOVE)
 # ============================================
 
-# --- ROLE CREATED ---
 @bot.event
 async def on_guild_role_create(role):
     log = bot.get_channel(ROLE_CREATE_LOG_CHANNEL_ID)
     if log:
-        await log.send(f"🆕 Role created: **{role.name}**")
+        embed = discord.Embed(
+            title="🆕 Role Created",
+            description=f"**{role.name}**",
+            color=discord.Color.green()
+        )
+        embed.set_footer(text=f"Role ID: {role.id}")
+        await log.send(embed=embed)
 
-
-# --- ROLE DELETED ---
 @bot.event
 async def on_guild_role_delete(role):
     log = bot.get_channel(ROLE_DELETE_LOG_CHANNEL_ID)
     if log:
-        await log.send(f"🗑️ Role deleted: **{role.name}**")
+        embed = discord.Embed(
+            title="🗑️ Role Deleted",
+            description=f"**{role.name}**",
+            color=discord.Color.red()
+        )
+        embed.set_footer(text=f"Role ID: {role.id}")
+        await log.send(embed=embed)
 
-
-# --- ROLE ADDED / REMOVED FROM MEMBER ---
 @bot.event
 async def on_member_update(before, after):
     guild = after.guild
@@ -253,9 +297,15 @@ async def on_member_update(before, after):
         async for entry in guild.audit_logs(limit=5, action=discord.AuditLogAction.member_role_update):
             if entry.target.id == after.id:
                 if log:
-                    await log.send(
-                        f"➕ **{entry.user}** added role **{new_role.name}** to **{after}**"
+                    embed = discord.Embed(
+                        title="➕ Role Added",
+                        color=discord.Color.green()
                     )
+                    embed.add_field(name="User", value=f"{after.mention}", inline=False)
+                    embed.add_field(name="Role", value=f"**{new_role.name}**", inline=False)
+                    embed.add_field(name="Moderator", value=f"{entry.user.mention}", inline=False)
+                    embed.set_footer(text=f"User ID: {after.id} | Role ID: {new_role.id}")
+                    await log.send(embed=embed)
                 break
 
     # ROLE REMOVED
@@ -265,9 +315,15 @@ async def on_member_update(before, after):
         async for entry in guild.audit_logs(limit=5, action=discord.AuditLogAction.member_role_update):
             if entry.target.id == after.id:
                 if log:
-                    await log.send(
-                        f"➖ **{entry.user}** removed role **{removed_role.name}** from **{after}**"
+                    embed = discord.Embed(
+                        title="➖ Role Removed",
+                        color=discord.Color.red()
                     )
+                    embed.add_field(name="User", value=f"{after.mention}", inline=False)
+                    embed.add_field(name="Role", value=f"**{removed_role.name}**", inline=False)
+                    embed.add_field(name="Moderator", value=f"{entry.user.mention}", inline=False)
+                    embed.set_footer(text=f"User ID: {after.id} | Role ID: {removed_role.id}")
+                    await log.send(embed=embed)
                 break
 
 # ============================================
@@ -915,7 +971,7 @@ async def panel(ctx):
 
 @bot.event
 async def on_member_join(member):
-    # Autorole
+    # --- AUTOROLE ---
     role = member.guild.get_role(AUTOROLE_ID)
     if role:
         try:
@@ -923,23 +979,38 @@ async def on_member_join(member):
         except:
             pass
 
-    # Log join
+    # --- JOIN LOG (EMBED) ---
     log = bot.get_channel(MEMBER_JOIN_LOG_CHANNEL_ID)
     if log:
-        await log.send(f"🟢 **{member}** joined the server.")
+        embed = discord.Embed(
+            title="🟢 Member Joined",
+            description=f"{member.mention} ({member.id})",
+            color=discord.Color.green()
+        )
+        embed.set_thumbnail(url=member.avatar)
+        embed.set_footer(text=f"User ID: {member.id}")
+        await log.send(embed=embed)
 
     # Update counters
     await update_voice_channels(member.guild)
+
 
 @bot.event
 async def on_member_remove(member):
+    # --- LEAVE LOG (EMBED) ---
     log = bot.get_channel(MEMBER_LEAVE_LOG_CHANNEL_ID)
     if log:
-        await log.send(f"🔴 **{member}** left the server.")
+        embed = discord.Embed(
+            title="🔴 Member Left",
+            description=f"{member.mention} ({member.id})",
+            color=discord.Color.red()
+        )
+        embed.set_thumbnail(url=member.avatar)
+        embed.set_footer(text=f"User ID: {member.id}")
+        await log.send(embed=embed)
 
     # Update counters
     await update_voice_channels(member.guild)
-
 # ============================================
 # SECTION 15 — ON_READY
 # ============================================
