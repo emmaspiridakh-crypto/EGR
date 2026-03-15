@@ -165,20 +165,60 @@ async def on_guild_update(before, after):
 # SECTION 7 — VOICE LOGS (JOIN / LEAVE / MOVE)
 # ============================================
 
-# ============================================
-# SECTION 7 — VOICE LOGS (JOIN / LEAVE / MOVE)
-# ============================================
-
 @bot.event
 async def on_voice_state_update(member, before, after):
     guild = member.guild
     log = bot.get_channel(VOICE_LOG_CHANNEL_ID)
-    if not log:
-        return
+
+    # ----------------------------------------
+    # TEMP SUPPORT VOICE SYSTEM (ΠΡΩΤΑ!)
+    # ----------------------------------------
+
+    # Create temp channel when joining support
+    if after.channel and after.channel.id == TEMP_VOICE_CHANNEL_ID:
+        category = guild.get_channel(TEMP_VOICE_CATEGORY_ID)
+        temp_channel = await guild.create_voice_channel(
+            name=f"{member.name}'s Support",
+            category=category
+        )
+        try:
+            await member.move_to(temp_channel)
+        except:
+            pass
+
+        if log:
+            embed = discord.Embed(
+                title="📞 Support Channel Created",
+                description=f"Created for {member.mention}",
+                color=discord.Color.blue()
+            )
+            embed.set_footer(text=f"Channel ID: {temp_channel.id}")
+            await log.send(embed=embed)
+
+    # Delete temp channel when empty
+    if before.channel and before.channel.category_id == TEMP_VOICE_CATEGORY_ID:
+        if before.channel.id != TEMP_VOICE_CHANNEL_ID:
+            if len(before.channel.members) == 0:
+                try:
+                    await before.channel.delete()
+
+                    if log:
+                        embed = discord.Embed(
+                            title="🗑️ Support Channel Deleted",
+                            description=f"Channel **{before.channel.name}** deleted (empty).",
+                            color=discord.Color.red()
+                        )
+                        await log.send(embed=embed)
+
+                except:
+                    pass
 
     # ----------------------------------------
     # EMBED VOICE LOGS (JOIN / LEAVE / MOVE)
     # ----------------------------------------
+
+    if not log:
+        return
 
     # JOIN
     if before.channel is None and after.channel is not None:
