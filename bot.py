@@ -165,13 +165,22 @@ async def on_guild_update(before, after):
 # SECTION 7 — VOICE LOGS (JOIN / LEAVE / MOVE)
 # ============================================
 
+# ============================================
+# SECTION 7 — VOICE LOGS (JOIN / LEAVE / MOVE)
+# ============================================
+
 @bot.event
 async def on_voice_state_update(member, before, after):
+    guild = member.guild
     log = bot.get_channel(VOICE_LOG_CHANNEL_ID)
     if not log:
         return
 
-    # --- USER JOINED VOICE ---
+    # ----------------------------------------
+    # EMBED VOICE LOGS (JOIN / LEAVE / MOVE)
+    # ----------------------------------------
+
+    # JOIN
     if before.channel is None and after.channel is not None:
         embed = discord.Embed(
             title="🔊 Voice Join",
@@ -182,7 +191,7 @@ async def on_voice_state_update(member, before, after):
         embed.set_footer(text=f"User ID: {member.id}")
         await log.send(embed=embed)
 
-    # --- USER LEFT VOICE ---
+    # LEAVE
     elif before.channel is not None and after.channel is None:
         embed = discord.Embed(
             title="🔇 Voice Leave",
@@ -193,14 +202,11 @@ async def on_voice_state_update(member, before, after):
         embed.set_footer(text=f"User ID: {member.id}")
         await log.send(embed=embed)
 
-    # --- USER MOVED VOICE CHANNEL ---
+    # MOVE
     elif before.channel != after.channel:
         embed = discord.Embed(
             title="🔁 Voice Move",
-            description=(
-                f"**{member.mention}** moved from **{before.channel.name}** "
-                f"to **{after.channel.name}**"
-            ),
+            description=f"**{member.mention}** moved from **{before.channel.name}** to **{after.channel.name}**",
             color=discord.Color.yellow()
         )
         embed.set_thumbnail(url=member.avatar)
@@ -208,12 +214,14 @@ async def on_voice_state_update(member, before, after):
         await log.send(embed=embed)
 
     # ----------------------------------------
-    # TEMP VOICE SYSTEM (όπως το είχες)
+    # TEMP SUPPORT VOICE SYSTEM
     # ----------------------------------------
+
+    # Create temp channel when joining support
     if after.channel and after.channel.id == TEMP_VOICE_CHANNEL_ID:
         category = guild.get_channel(TEMP_VOICE_CATEGORY_ID)
         temp_channel = await guild.create_voice_channel(
-            name=f"{member.name}'s Channel",
+            name=f"{member.name}'s Support",
             category=category
         )
         try:
@@ -221,41 +229,33 @@ async def on_voice_state_update(member, before, after):
         except:
             pass
 
+        # Log creation
+        embed = discord.Embed(
+            title="📞 Support Channel Created",
+            description=f"Created for {member.mention}",
+            color=discord.Color.blue()
+        )
+        embed.set_footer(text=f"Channel ID: {temp_channel.id}")
+        await log.send(embed=embed)
+
+    # Delete temp channel when empty
     if before.channel and before.channel.category_id == TEMP_VOICE_CATEGORY_ID:
         if before.channel.id != TEMP_VOICE_CHANNEL_ID:
             if len(before.channel.members) == 0:
                 try:
                     await before.channel.delete()
+
+                    # Log deletion
+                    embed = discord.Embed(
+                        title="🗑️ Support Channel Deleted",
+                        description=f"Channel **{before.channel.name}** was deleted (empty).",
+                        color=discord.Color.red()
+                    )
+                    await log.send(embed=embed)
+
                 except:
                     pass
 
-    # ----------------------------------------
-    # CLEAN VOICE LOGGING (όπως το ζήτησες)
-    # ----------------------------------------
-
-    # No change
-    if before.channel == after.channel:
-        return
-
-    # Joined voice
-    if before.channel is None and after.channel is not None:
-        if log:
-            await log.send(f"🔊 **{member}** joined **{after.channel.name}**")
-        return
-
-    # Left voice
-    if before.channel is not None and after.channel is None:
-        if log:
-            await log.send(f"🔇 **{member}** left **{before.channel.name}**")
-        return
-
-    # Moved voice
-    if before.channel is not None and after.channel is not None:
-        if log:
-            await log.send(
-                f"🔁 **{member}** moved from **{before.channel.name}** to **{after.channel.name}**"
-            )
-        return
 
 # ============================================
 # SECTION 8 — ROLE LOGS (CREATE / DELETE / ADD / REMOVE)
