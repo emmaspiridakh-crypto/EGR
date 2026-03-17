@@ -1080,8 +1080,6 @@ async def on_ready():
 # SECTION 16 — START BOT
 # ============================================
 
-keep_alive()
-
 if __name__ == "__main__":
     bot.run(TOKEN)
 
