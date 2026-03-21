@@ -1,7 +1,10 @@
 # ============================================
 # SECTION 1 — IMPORTS & FLASK KEEP_ALIVE
 # ============================================
-print(">>> BOT FILE LOADED <<<")
+with open("token.txt", "r") as f:
+    TOKEN = f.read().strip()
+    
+    print(">>> BOT FILE LOADED <<<")
 
 import os
 import discord
