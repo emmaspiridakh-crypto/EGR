@@ -475,6 +475,10 @@ class TicketCloseView(discord.ui.View):
 # MAIN TICKET PANEL
 # -------------------------------
 
+# -------------------------------
+# MAIN TICKET PANEL (NEW UI)
+# -------------------------------
+
 class MainTicketSelect(discord.ui.Select):
     def __init__(self):
         options = [
@@ -563,14 +567,69 @@ class MainTicketSelect(discord.ui.Select):
         )
 
 
+# -------------------------------
+# NEW DARK THEME PANEL UI
+# -------------------------------
+
 class MainTicketPanel(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
-        self.add_item(MainTicketSelect())
 
+        # === DARK THEME PANEL ===
+        embed = discord.Embed(
+            title="🎫 Άνοιγμα Ticket",
+            description=(
+                "Επίλεξε την κατηγορία που ταιριάζει στο αίτημά σου.\n"
+                "Το staff θα σε εξυπηρετήσει σύντομα."
+            ),
+            color=discord.Color.dark_gray()
+        )
+
+        # ΒΑΛΕ ΕΔΩ ΤΗ ΔΙΚΗ ΣΟΥ ΕΙΚΟΝΑ
+        embed.set_image(url="https://i.imgur.com/b7Vnb4u.png")
+
+        embed.set_footer(text="Emergency Greece Roleplay Support System")
+        embed.timestamp = discord.utils.utcnow()
+
+        # === NEW SELECT UI ===
+        options = [
+            discord.SelectOption(label="Owner", emoji="👑"),
+            discord.SelectOption(label="Bug", emoji="🐞"),
+            discord.SelectOption(label="Report", emoji="📙"),
+            discord.SelectOption(label="Support", emoji="💬"),
+        ]
+
+        select = discord.ui.Select(
+            placeholder="Διάλεξε κατηγορία ticket",
+            options=options,
+            min_values=1,
+            max_values=1
+        )
+
+        select.callback = self.select_callback
+        self.add_item(select)
+
+        self.embed = embed
+
+    async def send_panel(self, interaction_or_channel):
+        """Στέλνει το panel όπου το καλέσεις."""
+        if isinstance(interaction_or_channel, discord.Interaction):
+            await interaction_or_channel.response.send_message(embed=self.embed, view=self)
+        else:
+            await interaction_or_channel.send(embed=self.embed, view=self)
+
+    async def select_callback(self, interaction: discord.Interaction):
+        # Καλούμε το ΠΑΛΙΟ callback σου 100% ίδιο
+        view = MainTicketSelect()
+        view.values = [interaction.data["values"][0]]
+        await view.callback(interaction)
 
 # -------------------------------
 # JOB TICKET PANEL
+# -------------------------------
+
+# -------------------------------
+# JOB TICKET PANEL (NEW UI)
 # -------------------------------
 
 class JobTicketSelect(discord.ui.Select):
@@ -648,14 +707,60 @@ class JobTicketSelect(discord.ui.Select):
         )
 
 
+# -------------------------------
+# NEW DARK THEME JOB PANEL UI
+# -------------------------------
+
 class JobTicketPanel(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
-        self.add_item(JobTicketSelect())
 
-class DutyView(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=None)
+        # === DARK THEME PANEL ===
+        embed = discord.Embed(
+            title="🛠️ Job Ticket",
+            description=(
+                "Επίλεξε την κατηγορία job ticket που χρειάζεσαι.\n"
+                "Η ομάδα μας θα σε εξυπηρετήσει άμεσα."
+            ),
+            color=discord.Color.dark_gray()
+        )
+
+        # ΒΑΛΕ ΕΔΩ ΤΗ ΔΙΚΗ ΣΟΥ ΕΙΚΟΝΑ
+        embed.set_image(url="https://i.imgur.com/b7Vnb4u.png")
+
+        embed.set_footer(text="Emergency Greece Roleplay Job System")
+        embed.timestamp = discord.utils.utcnow()
+
+        # === NEW SELECT UI ===
+        options = [
+            discord.SelectOption(label="Civilian Job", emoji="👮"),
+            discord.SelectOption(label="Criminal Job", emoji="🕵️"),
+        ]
+
+        select = discord.ui.Select(
+            placeholder="Διάλεξε job κατηγορία",
+            options=options,
+            min_values=1,
+            max_values=1
+        )
+
+        select.callback = self.select_callback
+        self.add_item(select)
+
+        self.embed = embed
+
+    async def send_panel(self, interaction_or_channel):
+        """Στέλνει το panel όπου το καλέσεις."""
+        if isinstance(interaction_or_channel, discord.Interaction):
+            await interaction_or_channel.response.send_message(embed=self.embed, view=self)
+        else:
+            await interaction_or_channel.send(embed=self.embed, view=self)
+
+    async def select_callback(self, interaction: discord.Interaction):
+        # Καλούμε το ΠΑΛΙΟ callback σου 100% ίδιο
+        view = JobTicketSelect()
+        view.values = [interaction.data["values"][0]]
+        await view.callback(interaction)
 
     # ============================
     # ON DUTY BUTTON
