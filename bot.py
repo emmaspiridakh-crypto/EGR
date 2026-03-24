@@ -492,7 +492,7 @@ class MainTicketSelect(discord.ui.Select):
             title=f"🎫 Ticket από {author.name}",
             description=f"{author.mention} άνοιξε **{ticket_type}**.\n"
                         f"Παρακαλώ περιμένετε θα σας εξυπηρετήσουμε σύντομα.",
-            color=discord.Color.gray()
+            color=discord.Color.from_rgb(120, 120, 120)
         )
 
         await channel.send(embed=embed, view=TicketCloseView())
@@ -603,7 +603,7 @@ class JobTicketSelect(discord.ui.Select):
             title=f"🎫 Ticket από {author.name}",
             description=f"{author.mention} άνοιξε **{ticket_type}**.\n"
                         f"Παρακαλώ περιμένετε να σας εξυπηρετήσει ένας Manager.",
-            color=discord.Color.gray()
+            color=discord.Color.from_rgb(120, 120, 120)
         )
 
         await channel.send(embed=embed, view=TicketCloseView())
