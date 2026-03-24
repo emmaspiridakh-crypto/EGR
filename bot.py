@@ -376,7 +376,7 @@ async def on_message_delete(message):
             title="🗑️ Message Deleted",
             color=discord.Color.red()
         )
-        embed.add_field(name="User", value=f"{message.author} ({message.author.id})", inline=False)
+        embed.add_field(name="User", value=f"{message.author}", inline=False)
         embed.add_field(name="Channel", value=message.channel.mention, inline=False)
         embed.add_field(name="Content", value=message.content or "None", inline=False)
         await log.send(embed=embed)
