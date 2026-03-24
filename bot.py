@@ -533,16 +533,38 @@ class MainTicketPanel(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
+        embed = discord.Embed(
+            title="🎫 Emergency Greece Roleplay — Ticket Panel",
+            description=(
+                "**Επίλεξε την κατηγορία ticket που χρειάζεσαι.**\n"
+                "Η ομάδα μας θα σε εξυπηρετήσει άμεσα."
+            ),
+            color=discord.Color.from_rgb(20, 20, 25)
+        )
+
+        embed.set_image(url="https://i.imgur.com/lYjtK7e.jpeg")  # ΤΟ URL ΠΟΥ ΘΕΛΕΙΣ ΝΑ ΜΕΙΝΕΙ
+        embed.set_footer(text="NEON SYSTEM • ACTIVE")
+        embed.timestamp = discord.utils.utcnow()
+
+        options = [
+            discord.SelectOption(label="Owner", emoji="👑"),
+            discord.SelectOption(label="Bug", emoji="🐞"),
+            discord.SelectOption(label="Report", emoji="📢"),
+            discord.SelectOption(label="Support", emoji="💬"),
+        ]
+
+        select = discord.ui.Select(
+            placeholder="Διάλεξε κατηγορία ticket",
+            custom_id="main_ticket_select",
+            options=options,
+            min_values=1,
+            max_values=1
+        )
+
         select.callback = self.select_callback
         self.add_item(select)
 
         self.embed = embed
-
-    async def send_panel(self, interaction_or_channel):
-        if isinstance(interaction_or_channel, discord.Interaction):
-            await interaction_or_channel.response.send_message(embed=self.embed, view=self)
-        else:
-            await interaction_or_channel.send(embed=self.embed, view=self)
 
     async def select_callback(self, interaction: discord.Interaction):
         view = MainTicketSelect()
@@ -649,16 +671,36 @@ class JobTicketPanel(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
+        embed = discord.Embed(
+            title="🛠 Emergency Greece Roleplay — Job Panel",
+            description=(
+                "**Επίλεξε την κατηγορία job ticket που χρειάζεσαι.**\n"
+                "Η ομάδα μας θα σε εξυπηρετήσει άμεσα."
+            ),
+            color=discord.Color.from_rgb(20, 20, 25)
+        )
+
+        embed.set_image(url="https://i.imgur.com/lYjtK7e.jpeg")  # ΤΟ ΙΔΙΟ URL ΠΟΥ ΘΕΛΕΙΣ
+        embed.set_footer(text="NEON SYSTEM • ACTIVE")
+        embed.timestamp = discord.utils.utcnow()
+
+        options = [
+            discord.SelectOption(label="Civilian Job", emoji="🧑‍💼"),
+            discord.SelectOption(label="Criminal Job", emoji="🦹‍♂️"),
+        ]
+
+        select = discord.ui.Select(
+            placeholder="Διάλεξε job κατηγορία",
+            custom_id="job_ticket_select",
+            options=options,
+            min_values=1,
+            max_values=1
+        )
+
         select.callback = self.select_callback
         self.add_item(select)
 
         self.embed = embed
-
-    async def send_panel(self, interaction_or_channel):
-        if isinstance(interaction_or_channel, discord.Interaction):
-            await interaction_or_channel.response.send_message(embed=self.embed, view=self)
-        else:
-            await interaction_or_channel.send(embed=self.embed, view=self)
 
     async def select_callback(self, interaction: discord.Interaction):
         view = JobTicketSelect()
