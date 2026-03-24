@@ -668,7 +668,7 @@ class JobTicketPanel(discord.ui.View):
 
         select = discord.ui.Select(
             placeholder="Διάλεξε job κατηγορία",
-            ustom_id="job_ticket_select",
+            custom_id="job_ticket_select",
             options=options,
             min_values=1,
             max_values=1
