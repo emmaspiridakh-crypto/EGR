@@ -559,7 +559,7 @@ class MainTicketPanel(discord.ui.View):
 
     async def select_callback(self, interaction: discord.Interaction):
         view = MainTicketSelect()
-        view.values = [interaction.data["values"][0]]
+        view._values = [interaction.data["values"][0]]
         await view.callback(interaction)
 
 # -------------------------------
@@ -687,7 +687,7 @@ class JobTicketPanel(discord.ui.View):
 
     async def select_callback(self, interaction: discord.Interaction):
         view = JobTicketSelect()
-        view.values = [interaction.data["values"][0]]
+        view._values = [interaction.data["values"][0]]
         await view.callback(interaction)
 
 # ============================================
