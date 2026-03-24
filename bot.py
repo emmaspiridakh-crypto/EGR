@@ -507,7 +507,7 @@ if log_channel:
     log_embed.add_field(name="Τύπος", value=ticket_type)
     log_embed.add_field(name="Channel", value=channel.mention)
 
-await log_channel.send(embed=log_embed)
+    await log_channel.send(embed=log_embed)
 
 await interaction.response.send_message(
     f"Το ticket σου δημιουργήθηκε: {channel.mention}",
@@ -617,7 +617,7 @@ if log_channel:
     log_embed.add_field(name="Τύπος", value=ticket_type)
     log_embed.add_field(name="Channel", value=channel.mention)
 
-await log_channel.send(embed=log_embed)
+    await log_channel.send(embed=log_embed)
 
 await interaction.response.send_message(
     f"Το ticket σου δημιουργήθηκε: {channel.mention}",
