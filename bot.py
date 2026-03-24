@@ -518,7 +518,7 @@ class MainTicketPanel(discord.ui.View):
         super().__init__(timeout=None)
 
         embed = discord.Embed(
-            title="🎫 Emergency Greece Roleplay — Support Panel",
+            title="Emergency Greece Roleplay — Support Panel",
             description=(
                 "**Επίλεξε την κατηγορία που ταιριάζει στο αίτημά σου.**\n"
                 "Το προσωπικό θα σε εξυπηρετήσει άμεσα."
@@ -543,7 +543,7 @@ class MainTicketPanel(discord.ui.View):
             options=options,
             min_values=1,
             max_values=1
-)
+
         )
 
         select.callback = self.select_callback
@@ -649,7 +649,7 @@ class JobTicketPanel(discord.ui.View):
         super().__init__(timeout=None)
 
         embed = discord.Embed(
-            title="🛠 Emergency Greece Roleplay — Job Panel",
+            title="Emergency Greece Roleplay — Job Panel",
             description=(
                 "**Επίλεξε την κατηγορία job ticket που χρειάζεσαι.**\n"
                 "Η ομάδα μας θα σε εξυπηρετήσει άμεσα."
