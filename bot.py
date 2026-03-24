@@ -262,6 +262,7 @@ async def on_guild_role_create(role):
             description=f"**{role.name}**",
             color=discord.Color.green()
         )
+        embed.add_field(name="Moderator", value=f"{entry.user.mention}", inline=False)
         embed.set_footer(text=f"Role ID: {role.id}")
         await log.send(embed=embed)
 
@@ -274,6 +275,7 @@ async def on_guild_role_delete(role):
             description=f"**{role.name}**",
             color=discord.Color.red()
         )
+        embed.add_field(name="Moderator", value=f"{entry.user.mention}", inline=False)
         embed.set_footer(text=f"Role ID: {role.id}")
         await log.send(embed=embed)
 
@@ -404,14 +406,14 @@ class TicketCloseView(discord.ui.View):
                 description=f"Το ticket έκλεισε από {interaction.user.mention}",
                 color=discord.Color.red()
             )
-            embed.add_field(name="Channel", value=interaction.channel.mention, inline=False)
+            embed.add_field(name="Channel", inline=False)
             await log_channel.send(embed=embed)
 
         await interaction.response.send_message(
-            "Το ticket θα κλείσει σε 5 δευτερόλεπτα...", ephemeral=False
+            "Το ticket θα κλείσει σε 4 δευτερόλεπτα...", ephemeral=False
         )
 
-        await asyncio.sleep(5)
+        await asyncio.sleep(4)
 
         try:
             await interaction.channel.delete(reason="Ticket closed")
@@ -425,17 +427,31 @@ class TicketCloseView(discord.ui.View):
 class MainTicketSelect(discord.ui.Select):
     def __init__(self):
         options = [
-            discord.SelectOption(label="Owner", description="Επικοινωνία με Owners / Co-Owners", emoji="👑"),
-            discord.SelectOption(label="Bug", description="Αναφορά bug", emoji="🐞"),
-            discord.SelectOption(label="Report", description="Αναφορά παίκτη / συμβάντος", emoji="📙"),
-            discord.SelectOption(label="Support", description="Γενικό support", emoji="💬"),
+            discord.SelectOption(label="Owner", emoji="👑"),
+            discord.SelectOption(label="Bug", emoji="🐞"),
+            discord.SelectOption(label="Report", emoji="📙"),
+            discord.SelectOption(label="Support", emoji="💬"),
+            
         ]
-        super().__init__(
-            placeholder="Επίλεξε κατηγορία ticket...",
-            min_values=1,
-            max_values=1,
-            options=options
+        embed = discord.Embed(
+            title="Emergency Greece Roleplay — Support Panel",
+            description=(
+                "**Επίλεξε την κατηγορία που ταιριάζει στο αίτημά σου.**\n"
+                "Το προσωπικό θα σε εξυπηρετήσει άμεσα."
+            ),
+            color=discord.Color.from_rgb(20, 20, 25)  # dark neon base
         )
+
+        embed.set_image(url="https://i.imgur.com/lYjtK7e.jpeg")
+        embed.timestamp = discord.utils.utcnow()
+
+        select = discord.ui.Select(
+            custom_id="main_ticket_select",
+            placeholder="Διάλεξε κατηγορία ticket",
+            options=options,
+            min_values=1,
+            max_values=1
+
 
     async def callback(self, interaction: discord.Interaction):
         guild = interaction.guild
@@ -487,8 +503,8 @@ class MainTicketSelect(discord.ui.Select):
         embed = discord.Embed(
             title=f"🎫 Ticket από {author.name}",
             description=f"{author.mention} άνοιξε **{ticket_type}**.\n"
-                        f"Παρακαλώ περιμένετε να σας εξυπηρετήσει ένα staff.",
-            color=discord.Color.green()
+                        f"Παρακαλώ περιμένετε θα σας εξυπηρετήσουμε σύντομα.",
+            color=discord.Color.gray()
         )
 
         await channel.send(embed=embed, view=TicketCloseView())
@@ -501,7 +517,7 @@ class MainTicketSelect(discord.ui.Select):
                 color=discord.Color.blue()
             )
             log_embed.add_field(name="Τύπος", value=ticket_type)
-            log_embed.add_field(name="Channel", value=channel.mention)
+            log_embed.add_field(name="Channel")
             await log_channel.send(embed=log_embed)
 
         await interaction.response.send_message(
@@ -516,35 +532,6 @@ class MainTicketSelect(discord.ui.Select):
 class MainTicketPanel(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
-
-        embed = discord.Embed(
-            title="Emergency Greece Roleplay — Support Panel",
-            description=(
-                "**Επίλεξε την κατηγορία που ταιριάζει στο αίτημά σου.**\n"
-                "Το προσωπικό θα σε εξυπηρετήσει άμεσα."
-            ),
-            color=discord.Color.from_rgb(20, 20, 25)  # dark neon base
-        )
-
-        embed.set_image(url="https://i.imgur.com/lYjtK7e.jpeg")
-        embed.set_footer(text="NEON SYSTEM • ONLINE")
-        embed.timestamp = discord.utils.utcnow()
-
-        options = [
-            discord.SelectOption(label="Owner", emoji="👑"),
-            discord.SelectOption(label="Bug", emoji="🐞"),
-            discord.SelectOption(label="Report", emoji="📙"),
-            discord.SelectOption(label="Support", emoji="💬"),
-        ]
-
-        select = discord.ui.Select(
-            custom_id="main_ticket_select",
-            placeholder="Διάλεξε κατηγορία ticket",
-            options=options,
-            min_values=1,
-            max_values=1
-
-        )
 
         select.callback = self.select_callback
         self.add_item(select)
@@ -568,15 +555,29 @@ class MainTicketPanel(discord.ui.View):
 
 class JobTicketSelect(discord.ui.Select):
     def __init__(self):
+        embed = discord.Embed(
+            title="Emergency Greece Roleplay — Job Panel",
+            description=(
+                "**Επίλεξε την κατηγορία job ticket που χρειάζεσαι.**\n"
+                "Η ομάδα μας θα σε εξυπηρετήσει άμεσα."
+            ),
+            color=discord.Color.from_rgb(20, 20, 25)  # dark neon base
+        )
+
+        embed.set_image(url="https://i.imgur.com/lYjtK7e.jpeg")
+        embed.timestamp = discord.utils.utcnow()
+
         options = [
-            discord.SelectOption(label="Civilian Job", description="Civilian job", emoji="👮"),
-            discord.SelectOption(label="Criminal Job", description="Criminal job", emoji="🕵️"),
+            discord.SelectOption(label="Civilian Job", emoji="👮"),
+            discord.SelectOption(label="Criminal Job", emoji="🕵️"),
         ]
-        super().__init__(
-            placeholder="Επιλέξτε job category...",
+
+        select = discord.ui.Select(
+            placeholder="Διάλεξε job κατηγορία",
+            custom_id="job_ticket_select",
+            options=options,
             min_values=1,
-            max_values=1,
-            options=options
+            max_values=1
         )
 
     async def callback(self, interaction: discord.Interaction):
@@ -618,8 +619,8 @@ class JobTicketSelect(discord.ui.Select):
         embed = discord.Embed(
             title=f"🎫 Ticket από {author.name}",
             description=f"{author.mention} άνοιξε **{ticket_type}**.\n"
-                        f"Παρακαλώ περιμένετε να σας εξυπηρετήσει ένας Managers.",
-            color=discord.Color.green()
+                        f"Παρακαλώ περιμένετε να σας εξυπηρετήσει ένας Manager.",
+            color=discord.Color.gray()
         )
 
         await channel.send(embed=embed, view=TicketCloseView())
@@ -632,7 +633,7 @@ class JobTicketSelect(discord.ui.Select):
                 color=discord.Color.blue()
             )
             log_embed.add_field(name="Τύπος", value=ticket_type)
-            log_embed.add_field(name="Channel", value=channel.mention)
+            log_embed.add_field(name="Channel")
             await log_channel.send(embed=log_embed)
 
         await interaction.response.send_message(
@@ -647,32 +648,6 @@ class JobTicketSelect(discord.ui.Select):
 class JobTicketPanel(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
-
-        embed = discord.Embed(
-            title="Emergency Greece Roleplay — Job Panel",
-            description=(
-                "**Επίλεξε την κατηγορία job ticket που χρειάζεσαι.**\n"
-                "Η ομάδα μας θα σε εξυπηρετήσει άμεσα."
-            ),
-            color=discord.Color.from_rgb(20, 20, 25)  # dark neon base
-        )
-
-        embed.set_image(url="https://i.imgur.com/lYjtK7e.jpeg")
-        embed.set_footer(text="NEON SYSTEM • ACTIVE")
-        embed.timestamp = discord.utils.utcnow()
-
-        options = [
-            discord.SelectOption(label="Civilian Job", emoji="👮"),
-            discord.SelectOption(label="Criminal Job", emoji="🕵️"),
-        ]
-
-        select = discord.ui.Select(
-            placeholder="Διάλεξε job κατηγορία",
-            custom_id="job_ticket_select",
-            options=options,
-            min_values=1,
-            max_values=1
-        )
 
         select.callback = self.select_callback
         self.add_item(select)
@@ -867,7 +842,7 @@ async def on_member_join(member):
     if log:
         embed = discord.Embed(
             title="🟢 Member Joined",
-            description=f"{member.mention} ({member.id})",
+            description=f"{member.mention}",
             color=discord.Color.green()
         )
         embed.set_thumbnail(url=member.avatar)
@@ -885,7 +860,7 @@ async def on_member_remove(member):
     if log:
         embed = discord.Embed(
             title="🔴 Member Left",
-            description=f"{member.mention} ({member.id})",
+            description=f"{member.mention}",
             color=discord.Color.red()
         )
         embed.set_thumbnail(url=member.avatar)
@@ -928,15 +903,15 @@ async def ticketpanel(ctx):
         return await ctx.reply("Δεν έχεις δικαίωμα να στείλεις το panel.")
 
     embed = discord.Embed(
-        title="🎫 Welcome to Emergency Greece Roleplay",
-        description=(
-            "Για άμεση εξυπηρέτηση, επίλεξε την κατηγορία που ταιριάζει στο αίτημά σου.\n"
-            "Η ομάδα μας θα σε εξυπηρετήσει το συντομότερο δυνατό."
-        ),
-        color=0x2b2d31
-    )
+            title="Emergency Greece Roleplay — Support Panel",
+            description=(
+                "**Επίλεξε την κατηγορία που ταιριάζει στο αίτημά σου.**\n"
+                "Το προσωπικό θα σε εξυπηρετήσει άμεσα."
+            ),
+            color=discord.Color.from_rgb(20, 20, 25)  # dark neon base
+        )
 
-    embed.set_image(url="https://i.imgur.com/b7Vnb4u.png")
+    embed.set_image(url="https://i.imgur.com/lYjtK7e.jpeg")
     embed.set_footer(text="Emergency Greece Roleplay • Support System")
 
     await ctx.send(embed=embed, view=MainTicketPanel())
@@ -949,15 +924,15 @@ async def jobpanel(ctx):
         return await ctx.reply("Δεν έχεις δικαίωμα να στείλεις το panel.")
 
     embed = discord.Embed(
-        title="📋 Emergency Greece Roleplay — Job Tickets",
-        description=(
-            "Επέλεξε την κατηγορία job που ταιριάζει στο αίτημά σου.\n"
-            "Η ομάδα μας θα σε εξυπηρετήσει άμεσα."
-        ),
-        color=0x2b2d31
+            title="Emergency Greece Roleplay — Job Panel",
+            description=(
+                "**Επίλεξε την κατηγορία job ticket που χρειάζεσαι.**\n"
+                "Η ομάδα μας θα σε εξυπηρετήσει άμεσα."
+            ),
+            color=discord.Color.from_rgb(20, 20, 25)  # dark neon base
     )
 
-    embed.set_image(url="https://i.imgur.com/b7Vnb4u.png")
+    embed.set_image(url="https://i.imgur.com/lYjtK7e.jpeg")
     embed.set_footer(text="Emergency Greece Roleplay • Job Support")
 
     await ctx.send(embed=embed, view=JobTicketPanel())
