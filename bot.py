@@ -1,10 +1,8 @@
 # ============================================
 # SECTION 1 — IMPORTS & FLASK KEEP_ALIVE
 # ============================================
-with open("token.txt", "r") as f:
-    TOKEN = f.read().strip()
-    
-    print(">>> BOT FILE LOADED <<<")
+
+print(">>> BOT FILE LOADED <<<")
 
 import os
 import discord
@@ -30,7 +28,6 @@ def keep_alive():
     t = Thread(target=run)
     t.start()
 
-
 # ============================================
 # SECTION 2 — BOT SETUP & INTENTS
 # ============================================
@@ -41,7 +38,6 @@ intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 GUILD_ID = 1469054622550462720
-
 
 # ============================================
 # SECTION 3 — IDs (ALL TOGETHER)
@@ -83,12 +79,11 @@ ROLE_CREATE_LOG_CHANNEL_ID = 1475520225792364716
 ROLE_DELETE_LOG_CHANNEL_ID = 1475520225792364716
 TICKET_LOG_ID = 1474026151004340336
 
-# VOICE COUNTER CHANNELS (ΒΑΛΕ ΕΣΥ ΤΑ IDs)
+# VOICE COUNTER CHANNELS
 MEMBERS_CHANNEL_ID = 1479803418296975390
 BOTS_CHANNEL_ID = 1479803516905197769
 ONLINE_CHANNEL_ID = 1479803613017542676
 BOOSTS_CHANNEL_ID = 1479803665283022880
-
 
 # ============================================
 # SECTION 4 — HELPERS
@@ -96,7 +91,6 @@ BOOSTS_CHANNEL_ID = 1479803665283022880
 
 def is_owner_or_coowner(user: discord.Member):
     return any(r.id in (OWNER_ID, CO_OWNER_ID) for r in user.roles)
-
 
 # ============================================
 # SECTION 5 — DUTY SYSTEM STORAGE
@@ -173,7 +167,7 @@ async def on_voice_state_update(member, before, after):
     log = bot.get_channel(VOICE_LOG_CHANNEL_ID)
 
     # ----------------------------------------
-    # TEMP SUPPORT VOICE SYSTEM (ΠΡΩΤΑ!)
+    # TEMP SUPPORT VOICE SYSTEM
     # ----------------------------------------
 
     # Create temp channel when joining support
@@ -254,50 +248,6 @@ async def on_voice_state_update(member, before, after):
         embed.set_thumbnail(url=member.avatar)
         embed.set_footer(text=f"User ID: {member.id}")
         await log.send(embed=embed)
-
-    # ----------------------------------------
-    # TEMP SUPPORT VOICE SYSTEM
-    # ----------------------------------------
-
-    # Create temp channel when joining support
-    if after.channel and after.channel.id == TEMP_VOICE_CHANNEL_ID:
-        category = guild.get_channel(TEMP_VOICE_CATEGORY_ID)
-        temp_channel = await guild.create_voice_channel(
-            name=f"{member.name}'s Support",
-            category=category
-        )
-        try:
-            await member.move_to(temp_channel)
-        except:
-            pass
-
-        # Log creation
-        embed = discord.Embed(
-            title="📞 Support Channel Created",
-            description=f"Created for {member.mention}",
-            color=discord.Color.blue()
-        )
-        embed.set_footer(text=f"Channel ID: {temp_channel.id}")
-        await log.send(embed=embed)
-
-    # Delete temp channel when empty
-    if before.channel and before.channel.category_id == TEMP_VOICE_CATEGORY_ID:
-        if before.channel.id != TEMP_VOICE_CHANNEL_ID:
-            if len(before.channel.members) == 0:
-                try:
-                    await before.channel.delete()
-
-                    # Log deletion
-                    embed = discord.Embed(
-                        title="🗑️ Support Channel Deleted",
-                        description=f"Channel **{before.channel.name}** was deleted (empty).",
-                        color=discord.Color.red()
-                    )
-                    await log.send(embed=embed)
-
-                except:
-                    pass
-
 
 # ============================================
 # SECTION 8 — ROLE LOGS (CREATE / DELETE / ADD / REMOVE)
@@ -381,7 +331,6 @@ async def on_guild_channel_create(channel):
             f"(Type: {str(channel.type).title()})"
         )
 
-
 @bot.event
 async def on_guild_channel_delete(channel):
     log = bot.get_channel(CHANNEL_DELETE_LOG_CHANNEL_ID)
@@ -413,7 +362,6 @@ async def on_message_edit(before, after):
         embed.add_field(name="Before", value=before.content or "None", inline=False)
         embed.add_field(name="After", value=after.content or "None", inline=False)
         await log.send(embed=embed)
-
 
 @bot.event
 async def on_message_delete(message):
@@ -460,32 +408,27 @@ class TicketCloseView(discord.ui.View):
             await log_channel.send(embed=embed)
 
         await interaction.response.send_message(
-            "Το ticket θα κλείσει σε 2 δευτερόλεπτα...", ephemeral=False
+            "Το ticket θα κλείσει σε 5 δευτερόλεπτα...", ephemeral=False
         )
 
-        await asyncio.sleep(2)
+        await asyncio.sleep(5)
 
         try:
             await interaction.channel.delete(reason="Ticket closed")
         except:
             pass
 
-
 # -------------------------------
-# MAIN TICKET PANEL
-# -------------------------------
-
-# -------------------------------
-# MAIN TICKET PANEL (NEW UI)
+# MAIN TICKET SELECT (CALLBACK)
 # -------------------------------
 
 class MainTicketSelect(discord.ui.Select):
     def __init__(self):
         options = [
             discord.SelectOption(label="Owner", description="Επικοινωνία με Owners / Co-Owners", emoji="👑"),
-            discord.SelectOption(label="Bug", description="Αναφορά bug", emoji="🪲"),
+            discord.SelectOption(label="Bug", description="Αναφορά bug", emoji="🐞"),
             discord.SelectOption(label="Report", description="Αναφορά παίκτη / συμβάντος", emoji="📙"),
-            discord.SelectOption(label="Support", description="Γενικό support", emoji="📩"),
+            discord.SelectOption(label="Support", description="Γενικό support", emoji="💬"),
         ]
         super().__init__(
             placeholder="Επίλεξε κατηγορία ticket...",
@@ -566,32 +509,27 @@ class MainTicketSelect(discord.ui.Select):
             ephemeral=True
         )
 
-
 # -------------------------------
-# NEW DARK THEME PANEL UI
+# DARK NEON MAIN TICKET PANEL
 # -------------------------------
 
 class MainTicketPanel(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-        # === DARK THEME PANEL ===
         embed = discord.Embed(
-            title="🎫 Άνοιγμα Ticket",
+            title="🎫 Emergency Greece Roleplay — Support Panel",
             description=(
-                "Επίλεξε την κατηγορία που ταιριάζει στο αίτημά σου.\n"
-                "Το staff θα σε εξυπηρετήσει σύντομα."
+                "**Επίλεξε την κατηγορία που ταιριάζει στο αίτημά σου.**\n"
+                "Το προσωπικό θα σε εξυπηρετήσει άμεσα."
             ),
-            color=discord.Color.dark_gray()
+            color=discord.Color.from_rgb(20, 20, 25)  # dark neon base
         )
 
-        # ΒΑΛΕ ΕΔΩ ΤΗ ΔΙΚΗ ΣΟΥ ΕΙΚΟΝΑ
         embed.set_image(url="https://i.imgur.com/b7Vnb4u.png")
-
-        embed.set_footer(text="Emergency Greece Roleplay Support System")
+        embed.set_footer(text="NEON SYSTEM • ONLINE")
         embed.timestamp = discord.utils.utcnow()
 
-        # === NEW SELECT UI ===
         options = [
             discord.SelectOption(label="Owner", emoji="👑"),
             discord.SelectOption(label="Bug", emoji="🐞"),
@@ -612,24 +550,18 @@ class MainTicketPanel(discord.ui.View):
         self.embed = embed
 
     async def send_panel(self, interaction_or_channel):
-        """Στέλνει το panel όπου το καλέσεις."""
         if isinstance(interaction_or_channel, discord.Interaction):
             await interaction_or_channel.response.send_message(embed=self.embed, view=self)
         else:
             await interaction_or_channel.send(embed=self.embed, view=self)
 
     async def select_callback(self, interaction: discord.Interaction):
-        # Καλούμε το ΠΑΛΙΟ callback σου 100% ίδιο
         view = MainTicketSelect()
         view.values = [interaction.data["values"][0]]
         await view.callback(interaction)
 
 # -------------------------------
-# JOB TICKET PANEL
-# -------------------------------
-
-# -------------------------------
-# JOB TICKET PANEL (NEW UI)
+# JOB TICKET SELECT (CALLBACK)
 # -------------------------------
 
 class JobTicketSelect(discord.ui.Select):
@@ -706,32 +638,27 @@ class JobTicketSelect(discord.ui.Select):
             ephemeral=True
         )
 
-
 # -------------------------------
-# NEW DARK THEME JOB PANEL UI
+# DARK NEON JOB PANEL (NO DUTY BUTTONS)
 # -------------------------------
 
 class JobTicketPanel(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-        # === DARK THEME PANEL ===
         embed = discord.Embed(
-            title="🛠️ Job Ticket",
+            title="🛠 Emergency Greece Roleplay — Job Panel",
             description=(
-                "Επίλεξε την κατηγορία job ticket που χρειάζεσαι.\n"
+                "**Επίλεξε την κατηγορία job ticket που χρειάζεσαι.**\n"
                 "Η ομάδα μας θα σε εξυπηρετήσει άμεσα."
             ),
-            color=discord.Color.dark_gray()
+            color=discord.Color.from_rgb(20, 20, 25)  # dark neon base
         )
 
-        # ΒΑΛΕ ΕΔΩ ΤΗ ΔΙΚΗ ΣΟΥ ΕΙΚΟΝΑ
         embed.set_image(url="https://i.imgur.com/b7Vnb4u.png")
-
-        embed.set_footer(text="Emergency Greece Roleplay Job System")
+        embed.set_footer(text="NEON SYSTEM • ACTIVE")
         embed.timestamp = discord.utils.utcnow()
 
-        # === NEW SELECT UI ===
         options = [
             discord.SelectOption(label="Civilian Job", emoji="👮"),
             discord.SelectOption(label="Criminal Job", emoji="🕵️"),
@@ -750,165 +677,16 @@ class JobTicketPanel(discord.ui.View):
         self.embed = embed
 
     async def send_panel(self, interaction_or_channel):
-        """Στέλνει το panel όπου το καλέσεις."""
         if isinstance(interaction_or_channel, discord.Interaction):
             await interaction_or_channel.response.send_message(embed=self.embed, view=self)
         else:
             await interaction_or_channel.send(embed=self.embed, view=self)
 
     async def select_callback(self, interaction: discord.Interaction):
-        # Καλούμε το ΠΑΛΙΟ callback σου 100% ίδιο
         view = JobTicketSelect()
         view.values = [interaction.data["values"][0]]
         await view.callback(interaction)
 
-    # ============================
-    # ON DUTY BUTTON
-    # ============================
-    @discord.ui.button(label="Go ON Duty", style=discord.ButtonStyle.green)
-    async def duty_on(self, interaction: discord.Interaction, button: discord.ui.Button):
-        user = interaction.user
-        guild = interaction.guild
-        duty_role = guild.get_role(DUTY_ROLE_ID)
-
-        user_id = str(user.id)
-
-        duty_data[user_id] = {
-            "status": "on",
-            "timestamp": time.time()
-        }
-        save_duty_data(duty_data)
-
-        if duty_role:
-            try:
-                await user.add_roles(duty_role)
-            except:
-                pass
-
-        await interaction.response.send_message(
-            f"🟢 {user.mention}, είσαι τώρα **ON DUTY**.",
-            ephemeral=True
-        )
-
-    # ============================
-    # OFF DUTY BUTTON
-    # ============================
-    @discord.ui.button(label="Go OFF Duty", style=discord.ButtonStyle.red)
-    async def duty_off(self, interaction: discord.Interaction, button: discord.ui.Button):
-        user = interaction.user
-        guild = interaction.guild
-        duty_role = guild.get_role(DUTY_ROLE_ID)
-
-        user_id = str(user.id)
-
-        if user_id not in duty_data or duty_data[user_id]["status"] == "off":
-            return await interaction.response.send_message(
-                "❌ Δεν είσαι ON DUTY.",
-                ephemeral=True
-            )
-
-        start = duty_data[user_id]["timestamp"]
-        total_minutes = round((time.time() - start) / 60)
-
-        duty_data[user_id] = {
-            "status": "off",
-            "timestamp": 0
-        }
-        save_duty_data(duty_data)
-
-        if duty_role:
-            try:
-                await user.remove_roles(duty_role)
-            except:
-                pass
-
-        await interaction.response.send_message(
-            f"🔴 {user.mention}, έγινες **OFF DUTY**.\n⏱ Χρόνος: **{total_minutes} λεπτά**.",
-            ephemeral=True
-        )
-
-    # ============================
-    # DUTY STATUS BUTTON
-    # ============================
-        
-    @discord.ui.button(label="Duty Status", style=discord.ButtonStyle.blurple)
-    async def duty_status(self, interaction: discord.Interaction, button: discord.ui.Button):
-        guild = interaction.guild
-
-        on_duty_users = []
-        for uid, data in duty_data.items():
-            if data["status"] == "on":
-                member = guild.get_member(int(uid))
-                if member:
-                    minutes = round((time.time() - data["timestamp"]) / 60)
-                    on_duty_users.append(f"• {member.mention} — {minutes} λεπτά")
-
-        if not on_duty_users:
-            msg = "Κανένας δεν είναι ON DUTY αυτή τη στιγμή."
-        else:
-            msg = "\n".join(on_duty_users)
-
-        await interaction.response.send_message(
-            f"📊 **Duty Status:**\n{msg}",
-            ephemeral=True
-        )
-
-# -------------------------------
-# PANEL COMMANDS
-# -------------------------------
-
-@bot.command()
-async def ticketpanel(ctx):
-    if not is_owner_or_coowner(ctx.author):
-        return await ctx.reply("Δεν έχεις δικαίωμα να στείλεις το panel.")
-
-    embed = discord.Embed(
-        title="🎫 Welcome to Emergency Greece Roleplay",
-        description=(
-            "Για άμεση εξυπηρέτηση, επίλεξε την κατηγορία που ταιριάζει στο αίτημά σου.\n"
-            "Η ομάδα μας θα σε εξυπηρετήσει το συντομότερο δυνατό."
-        ),
-        color=0x2b2d31
-    )
-
-    embed.set_image(url="https://i.imgur.com/S6xJkcC.png")
-    embed.set_footer(text="Emergency Greece Roleplay • Support System")
-
-    await ctx.send(embed=embed, view=MainTicketPanel())
-    await ctx.reply("Το νέο ticket panel στάλθηκε.", delete_after=2)
-
-
-@bot.command()
-async def jobpanel(ctx):
-    if not is_owner_or_coowner(ctx.author):
-        return await ctx.reply("Δεν έχεις δικαίωμα να στείλεις το panel.")
-
-    embed = discord.Embed(
-        title="📋 Emergency Greece Roleplay — Job Tickets",
-        description=(
-            "Επέλεξε την κατηγορία job που ταιριάζει στο αίτημά σου.\n"
-            "Η ομάδα μας θα σε εξυπηρετήσει άμεσα."
-        ),
-        color=0x2b2d31
-    )
-
-    embed.set_image(url="https://i.imgur.com/S6xJkcC.png")
-    embed.set_footer(text="Emergency Greece Roleplay • Job Support")
-
-    await ctx.send(embed=embed, view=JobTicketPanel())
-    await ctx.reply("Το νέο job ticket panel στάλθηκε.", delete_after=2)
-
-@bot.command()
-async def dutypanel(ctx):
-    embed = discord.Embed(
-        title="🛡 Staff Duty Panel",
-        description="Επίλεξε ON DUTY / OFF DUTY ή δες ποιοι είναι μέσα.",
-        color=discord.Color.blue()
-    )
-
-    await ctx.send(embed=embed, view=DutyView())
-
-    
 # ============================================
 # SECTION 12 — MODERATION COMMANDS
 # ============================================
@@ -920,11 +698,6 @@ def has_staff_permissions(member: discord.Member):
         member.guild_permissions.ban_members or
         any(r.id in (STAFF_ID, ORGANIZER_ID, OWNER_ID, CO_OWNER_ID, CEO_ID) for r in member.roles)
     )
-
-
-# -------------------------------
-# BAN COMMAND
-# -------------------------------
 
 @bot.command()
 async def ban(ctx, member: discord.Member = None, *, reason="No reason provided"):
@@ -941,11 +714,6 @@ async def ban(ctx, member: discord.Member = None, *, reason="No reason provided"
     if log:
         await log.send(f"🔨 **{ctx.author}** banned **{member}** — Reason: {reason}")
 
-
-# -------------------------------
-# KICK COMMAND
-# -------------------------------
-
 @bot.command()
 async def kick(ctx, member: discord.Member = None, *, reason="No reason provided"):
     if not has_staff_permissions(ctx.author):
@@ -960,11 +728,6 @@ async def kick(ctx, member: discord.Member = None, *, reason="No reason provided
     log = bot.get_channel(BOT_LOG_ID)
     if log:
         await log.send(f"👢 **{ctx.author}** kicked **{member}** — Reason: {reason}")
-
-
-# -------------------------------
-# TIMEOUT COMMAND
-# -------------------------------
 
 @bot.command()
 async def timeout(ctx, member: discord.Member = None, minutes: int = None, *, reason="No reason provided"):
@@ -985,11 +748,6 @@ async def timeout(ctx, member: discord.Member = None, minutes: int = None, *, re
             f"⏳ **{ctx.author}** timed out **{member}** for **{minutes} minutes** — Reason: {reason}"
         )
 
-
-# -------------------------------
-# CLEAR MESSAGES COMMAND
-# -------------------------------
-
 @bot.command()
 async def clearmessage(ctx, amount: int = None):
     if not has_staff_permissions(ctx.author):
@@ -1009,25 +767,16 @@ async def clearmessage(ctx, amount: int = None):
 # SECTION 13 — UTILITY COMMANDS
 # ============================================
 
-# -------------------------------
-# SAY COMMAND (Owner + Co-Owner)
-# -------------------------------
-
 @bot.command()
 async def say(ctx, *, message: str):
     if not is_owner_or_coowner(ctx.author):
         return await ctx.reply("❌ Δεν έχεις δικαίωμα να χρησιμοποιήσεις αυτή την εντολή.")
     await ctx.send(message)
 
-
-# -------------------------------
-# DMALL COMMAND (ONLY CEO)
-# -------------------------------
-
 @bot.command()
 async def dmall(ctx, *, message: str):
     # CEO ONLY
-    ceo_role = ctx.guild.get_role(CEO_ID)  # Αν έχεις άλλο CEO role, άλλαξέ το εδώ
+    ceo_role = ctx.guild.get_role(CEO_ID)
 
     if ceo_role not in ctx.author.roles:
         return await ctx.reply("❌ Μόνο ο CEO μπορεί να χρησιμοποιήσει αυτή την εντολή.")
@@ -1043,11 +792,6 @@ async def dmall(ctx, *, message: str):
             continue
 
     await ctx.reply(f"📨 Το μήνυμα στάλθηκε σε **{sent}** μέλη.")
-
-
-# -------------------------------
-# SERVER STATUS COMMAND
-# -------------------------------
 
 @bot.command()
 async def serverstatus(ctx):
@@ -1070,11 +814,6 @@ async def serverstatus(ctx):
 
     await ctx.reply(embed=embed)
 
-
-# -------------------------------
-# PANEL COMMAND (SHOW ALL COMMANDS)
-# -------------------------------
-
 @bot.command()
 async def panel(ctx):
     if not is_owner_or_coowner(ctx.author):
@@ -1093,19 +832,13 @@ async def panel(ctx):
     )
 
     embed.add_field(
-        name="🎫 Tickets",
-        value="`!ticketpanel`, `!jobpanel`",
-        inline=False
-    )
-
-    embed.add_field(
         name="📊 Info",
         value="`!serverstatus`",
         inline=False
     )
 
     embed.add_field(
-        name="🧰 Utility",
+        name="🧰 Utility (Only for: CEO/OWNER/CO-OWNER)",
         value="`!say`, `!dmall`",
         inline=False
     )
@@ -1158,6 +891,7 @@ async def on_member_remove(member):
 
     # Update counters
     await update_voice_channels(member.guild)
+
 # ============================================
 # SECTION 15 — ON_READY
 # ============================================
@@ -1165,36 +899,71 @@ async def on_member_remove(member):
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
-    
+
+    # Persistent views
+    bot.add_view(MainTicketPanel())
     bot.add_view(JobTicketPanel())
-    bot.add_view(DutyView())
+    bot.add_view(TicketCloseView())
 
     guild = bot.get_guild(GUILD_ID)
     if guild:
-        # Update counters on startup
         await update_voice_channels(guild)
 
-    # Set bot status
     await bot.change_presence(
         activity=discord.Game(name="Emergency Greece Roleplay")
     )
 
     print("Bot is fully online and ready.")
-   
+
 # ============================================
-# SECTION 16 — START BOT
+# SECTION 16 — PANEL COMMANDS
+# ============================================
+
+@bot.command()
+async def ticketpanel(ctx):
+    if not is_owner_or_coowner(ctx.author):
+        return await ctx.reply("Δεν έχεις δικαίωμα να στείλεις το panel.")
+
+    embed = discord.Embed(
+        title="🎫 Welcome to Emergency Greece Roleplay",
+        description=(
+            "Για άμεση εξυπηρέτηση, επίλεξε την κατηγορία που ταιριάζει στο αίτημά σου.\n"
+            "Η ομάδα μας θα σε εξυπηρετήσει το συντομότερο δυνατό."
+        ),
+        color=0x2b2d31
+    )
+
+    embed.set_image(url="https://i.imgur.com/b7Vnb4u.png")
+    embed.set_footer(text="Emergency Greece Roleplay • Support System")
+
+    await ctx.send(embed=embed, view=MainTicketPanel())
+    await ctx.reply("Το νέο ticket panel στάλθηκε.", delete_after=2)
+
+
+@bot.command()
+async def jobpanel(ctx):
+    if not is_owner_or_coowner(ctx.author):
+        return await ctx.reply("Δεν έχεις δικαίωμα να στείλεις το panel.")
+
+    embed = discord.Embed(
+        title="📋 Emergency Greece Roleplay — Job Tickets",
+        description=(
+            "Επέλεξε την κατηγορία job που ταιριάζει στο αίτημά σου.\n"
+            "Η ομάδα μας θα σε εξυπηρετήσει άμεσα."
+        ),
+        color=0x2b2d31
+    )
+
+    embed.set_image(url="https://i.imgur.com/b7Vnb4u.png")
+    embed.set_footer(text="Emergency Greece Roleplay • Job Support")
+
+    await ctx.send(embed=embed, view=JobTicketPanel())
+    await ctx.reply("Το νέο job ticket panel στάλθηκε.", delete_after=2)
+
+# ============================================
+# SECTION 17 — START BOT
 # ============================================
 
 if __name__ == "__main__":
+    keep_alive()
     bot.run(TOKEN)
-
-
-
-
-
-
-
-
-
-
-
