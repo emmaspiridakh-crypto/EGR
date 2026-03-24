@@ -393,9 +393,8 @@ class TicketCloseView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(label="Close Ticket", style=discord.ButtonStyle.red)
+    @discord.ui.button(label="Close Ticket", style=discord.ButtonStyle.red, custom_id="close_ticket_button")
     async def close_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
-
         guild = interaction.guild
         log_channel = guild.get_channel(TICKET_LOG_ID)
 
@@ -406,7 +405,7 @@ class TicketCloseView(discord.ui.View):
                 description=f"Το ticket έκλεισε από {interaction.user.mention}",
                 color=discord.Color.red()
             )
-            embed.add_field(name="Channel", inline=False)
+            embed.add_field(name="Channel", value=interaction.channel.mention, inline=False)
             await log_channel.send(embed=embed)
 
         await interaction.response.send_message(
@@ -416,7 +415,7 @@ class TicketCloseView(discord.ui.View):
         await asyncio.sleep(4)
 
         try:
-            await interaction.channel.delete(reason="Ticket closed")
+            await interaction.channel.delete(reason=f"Ticket closed by {interaction.user}")
         except:
             pass
 
