@@ -441,84 +441,81 @@ class MainTicketSelect(discord.ui.Select):
             options=options
         )
 
-async def callback(self, interaction: discord.Interaction):
-    guild = interaction.guild
-    author = interaction.user
+    async def callback(self, interaction: discord.Interaction):
+        guild = interaction.guild
+        author = interaction.user
 
-    category = guild.get_channel(MAIN_TICKET_CATEGORY_ID)
-    if not category:
-        return await interaction.response.send_message("Η κατηγορία ticket δεν βρέθηκε.", ephemeral=True)
+        category = guild.get_channel(MAIN_TICKET_CATEGORY_ID)
+        if not category:
+            return await interaction.response.send_message("Η κατηγορία ticket δεν βρέθηκε.", ephemeral=True)
 
-    overwrites = {
-        guild.default_role: discord.PermissionOverwrite(view_channel=False),
-        author: discord.PermissionOverwrite(view_channel=True, send_messages=True, read_message_history=True),
-    }
+        overwrites = {
+            guild.default_role: discord.PermissionOverwrite(view_channel=False),
+            author: discord.PermissionOverwrite(view_channel=True, send_messages=True, read_message_history=True),
+        }
 
-    if self.values[0] == "Owner":
-        roles_ids = [OWNER_ID, CO_OWNER_ID]
-        name = f"owner-{author.name}".replace(" ", "-").lower()
-        ticket_type = "Owner Ticket"
+        if self.values[0] == "Owner":
+            roles_ids = [OWNER_ID, CO_OWNER_ID]
+            name = f"owner-{author.name}".replace(" ", "-").lower()
+            ticket_type = "Owner Ticket"
 
-    elif self.values[0] == "Bug":
-        roles_ids = [DEVELOPER_ID, OWNER_ID, CO_OWNER_ID]
-        name = f"bug-{author.name}".replace(" ", "-").lower()
-        ticket_type = "Bug Report"
+        elif self.values[0] == "Bug":
+            roles_ids = [DEVELOPER_ID, OWNER_ID, CO_OWNER_ID]
+            name = f"bug-{author.name}".replace(" ", "-").lower()
+            ticket_type = "Bug Report"
 
-    elif self.values[0] == "Report":
-        roles_ids = [ORGANIZER_ID, OWNER_ID, CO_OWNER_ID]
-        name = f"report-{author.name}".replace(" ", "-").lower()
-        ticket_type = "Report"
+        elif self.values[0] == "Report":
+            roles_ids = [ORGANIZER_ID, OWNER_ID, CO_OWNER_ID]
+            name = f"report-{author.name}".replace(" ", "-").lower()
+            ticket_type = "Report"
 
-    else:
-        roles_ids = [STAFF_ID, OWNER_ID, CO_OWNER_ID]
-        name = f"support-{author.name}".replace(" ", "-").lower()
-        ticket_type = "Support"
+        else:
+            roles_ids = [STAFF_ID, OWNER_ID, CO_OWNER_ID]
+            name = f"support-{author.name}".replace(" ", "-").lower()
+            ticket_type = "Support"
 
-    for rid in roles_ids:
-        role = guild.get_role(rid)
-        if role:
-            overwrites[role] = discord.PermissionOverwrite(
-                view_channel=True, send_messages=True, read_message_history=True
-            )
+        for rid in roles_ids:
+            role = guild.get_role(rid)
+            if role:
+                overwrites[role] = discord.PermissionOverwrite(
+                    view_channel=True, send_messages=True, read_message_history=True
+                )
 
-    channel = await guild.create_text_channel(
-        name=name,
-        category=category,
-        overwrites=overwrites,
-        reason=f"Ticket created by {author} ({ticket_type})"
-    )
-
-    embed = discord.Embed(
-        title=f"🎫 Ticket από {author.name}",
-        description=f"{author.mention} άνοιξε **{ticket_type}**.\n"
-                    f"Παρακαλώ περιμένετε θα σας εξυπηρετήσουμε σύντομα.",
-        color=discord.Color.gray()
-    )
-
-    await channel.send(embed=embed, view=TicketCloseView())
-
-    # -------------------------
-    # LOGGING (ΜΕΣΑ στο callback)
-    # -------------------------
-    log_channel = guild.get_channel(TICKET_LOG_ID)
-    if log_channel:
-        log_embed = discord.Embed(
-            title="📂 Νέο Ticket",
-            description=f"Ο χρήστης {author.mention} άνοιξε ticket.",
-            color=discord.Color.blue()
+        channel = await guild.create_text_channel(
+            name=name,
+            category=category,
+            overwrites=overwrites,
+            reason=f"Ticket created by {author} ({ticket_type})"
         )
-        log_embed.add_field(name="Τύπος", value=ticket_type)
-        log_embed.add_field(name="Channel", value=channel.mention)
 
-        await log_channel.send(embed=log_embed)
+        embed = discord.Embed(
+            title=f"🎫 Ticket από {author.name}",
+            description=f"{author.mention} άνοιξε **{ticket_type}**.\n"
+                        f"Παρακαλώ περιμένετε θα σας εξυπηρετήσουμε σύντομα.",
+            color=discord.Color.gray()
+        )
 
-    # -------------------------
-    # ΤΕΛΙΚΟ ΜΗΝΥΜΑ
-    # -------------------------
-    await interaction.response.send_message(
-        f"Το ticket σου δημιουργήθηκε: {channel.mention}",
-        ephemeral=True
-    )
+        await channel.send(embed=embed, view=TicketCloseView())
+
+        # LOGGING
+        log_channel = guild.get_channel(TICKET_LOG_ID)
+        if log_channel:
+            log_embed = discord.Embed(
+                title="📂 Νέο Ticket",
+                description=f"Ο χρήστης {author.mention} άνοιξε ticket.",
+                color=discord.Color.blue()
+            )
+            log_embed.add_field(name="Τύπος", value=ticket_type)
+            log_embed.add_field(name="Channel", value=channel.mention)
+
+            await log_channel.send(embed=log_embed)
+
+        await interaction.response.send_message(
+            f"Το ticket σου δημιουργήθηκε: {channel.mention}",
+            ephemeral=True
+        )
+
+
 # -------------------------------
 # DARK NEON MAIN TICKET PANEL
 # -------------------------------
@@ -657,7 +654,6 @@ class JobTicketPanel(discord.ui.View):
             await interaction_or_channel.response.send_message(embed=self.embed, view=self)
         else:
             await interaction_or_channel.send(embed=self.embed, view=self)
-            
 # ============================================
 # SECTION 12 — MODERATION COMMANDS
 # ============================================
