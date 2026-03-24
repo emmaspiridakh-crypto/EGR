@@ -497,7 +497,7 @@ class MainTicketSelect(discord.ui.Select):
 
         await channel.send(embed=embed, view=TicketCloseView())
 
-       log_channel = guild.get_channel(TICKET_LOG_ID)
+log_channel = guild.get_channel(TICKET_LOG_ID)
 if log_channel:
     log_embed = discord.Embed(
         title="📂 Νέο Ticket",
@@ -506,6 +506,7 @@ if log_channel:
     )
     log_embed.add_field(name="Τύπος", value=ticket_type)
     log_embed.add_field(name="Channel", value=channel.mention)
+
     await log_channel.send(embed=log_embed)
 
         await interaction.response.send_message(
@@ -606,7 +607,7 @@ class JobTicketSelect(discord.ui.Select):
 
         await channel.send(embed=embed, view=TicketCloseView())
 
-       log_channel = guild.get_channel(TICKET_LOG_ID)
+log_channel = guild.get_channel(TICKET_LOG_ID)
 if log_channel:
     log_embed = discord.Embed(
         title="📂 Νέο Ticket",
@@ -615,7 +616,9 @@ if log_channel:
     )
     log_embed.add_field(name="Τύπος", value=ticket_type)
     log_embed.add_field(name="Channel", value=channel.mention)
+
     await log_channel.send(embed=log_embed)
+
         await interaction.response.send_message(
             f"Το job ticket σου δημιουργήθηκε: {channel.mention}",
             ephemeral=True
