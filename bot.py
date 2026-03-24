@@ -526,7 +526,7 @@ class MainTicketPanel(discord.ui.View):
             color=discord.Color.from_rgb(20, 20, 25)  # dark neon base
         )
 
-        embed.set_image(url="https://i.imgur.com/b7Vnb4u.png")
+        embed.set_image(url="https://i.imgur.com/lYjtK7e.jpeg")
         embed.set_footer(text="NEON SYSTEM • ONLINE")
         embed.timestamp = discord.utils.utcnow()
 
@@ -538,10 +538,12 @@ class MainTicketPanel(discord.ui.View):
         ]
 
         select = discord.ui.Select(
+            custom_id="main_ticket_select",
             placeholder="Διάλεξε κατηγορία ticket",
             options=options,
             min_values=1,
             max_values=1
+)
         )
 
         select.callback = self.select_callback
@@ -655,7 +657,7 @@ class JobTicketPanel(discord.ui.View):
             color=discord.Color.from_rgb(20, 20, 25)  # dark neon base
         )
 
-        embed.set_image(url="https://i.imgur.com/b7Vnb4u.png")
+        embed.set_image(url="https://i.imgur.com/lYjtK7e.jpeg")
         embed.set_footer(text="NEON SYSTEM • ACTIVE")
         embed.timestamp = discord.utils.utcnow()
 
@@ -666,6 +668,7 @@ class JobTicketPanel(discord.ui.View):
 
         select = discord.ui.Select(
             placeholder="Διάλεξε job κατηγορία",
+            ustom_id="job_ticket_select",
             options=options,
             min_values=1,
             max_values=1
