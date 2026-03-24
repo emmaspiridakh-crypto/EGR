@@ -472,7 +472,7 @@ class MainTicketSelect(discord.ui.Select):
         else:
             roles_ids = [STAFF_ID, OWNER_ID, CO_OWNER_ID]
             name = f"support-{author.name}".replace(" ", "-").lower()
-            ticket_type = "Support Ticket"
+            ticket_type = "Support"
 
         for rid in roles_ids:
             role = guild.get_role(rid)
@@ -497,16 +497,16 @@ class MainTicketSelect(discord.ui.Select):
 
         await channel.send(embed=embed, view=TicketCloseView())
 
-        log_channel = guild.get_channel(TICKET_LOG_ID)
-        if log_channel:
-            log_embed = discord.Embed(
-                title="📂 Νέο Ticket",
-                description=f"Ο χρήστης {author.mention} άνοιξε ticket.",
-                color=discord.Color.blue()
-            )
-            log_embed.add_field(name="Τύπος", value=ticket_type)
-            log_embed.add_field(name="Channel",
-            await log_channel.send(embed=log_embed) , 
+       log_channel = guild.get_channel(TICKET_LOG_ID)
+if log_channel:
+    log_embed = discord.Embed(
+        title="📂 Νέο Ticket",
+        description=f"Ο χρήστης {author.mention} άνοιξε ticket.",
+        color=discord.Color.blue()
+    )
+    log_embed.add_field(name="Τύπος", value=ticket_type)
+    log_embed.add_field(name="Channel", value=channel.mention)
+    await log_channel.send(embed=log_embed)
 
         await interaction.response.send_message(
             f"Το ticket σου δημιουργήθηκε: {channel.mention}",
@@ -606,17 +606,16 @@ class JobTicketSelect(discord.ui.Select):
 
         await channel.send(embed=embed, view=TicketCloseView())
 
-        log_channel = guild.get_channel(TICKET_LOG_ID)
-        if log_channel:
-            log_embed = discord.Embed(
-                title="📂 Νέο Ticket",
-                description=f"Ο χρήστης {author.mention} άνοιξε ticket.",
-                color=discord.Color.blue()
-            )
-            log_embed.add_field(name="Τύπος", value=ticket_type)
-            log_embed.add_field(name="Channel"
-            await log_channel.send(embed=log_embed)
-
+       log_channel = guild.get_channel(TICKET_LOG_ID)
+if log_channel:
+    log_embed = discord.Embed(
+        title="📂 Νέο Ticket",
+        description=f"Ο χρήστης {author.mention} άνοιξε ticket.",
+        color=discord.Color.blue()
+    )
+    log_embed.add_field(name="Τύπος", value=ticket_type)
+    log_embed.add_field(name="Channel", value=channel.mention)
+    await log_channel.send(embed=log_embed)
         await interaction.response.send_message(
             f"Το job ticket σου δημιουργήθηκε: {channel.mention}",
             ephemeral=True
