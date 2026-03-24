@@ -505,7 +505,7 @@ class MainTicketSelect(discord.ui.Select):
                 color=discord.Color.blue()
             )
             log_embed.add_field(name="Τύπος", value=ticket_type)
-            log_embed.add_field(name="Channel"
+            log_embed.add_field(name="Channel",
             await log_channel.send(embed=log_embed)
 
         await interaction.response.send_message(
