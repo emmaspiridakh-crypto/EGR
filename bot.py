@@ -566,74 +566,68 @@ class JobTicketSelect(discord.ui.Select):
             options=options
         )
 
-   async def callback(self, interaction: discord.Interaction):
-    guild = interaction.guild
-    author = interaction.user
+    async def callback(self, interaction: discord.Interaction):
+        guild = interaction.guild
+        author = interaction.user
 
-    category = guild.get_channel(JOB_TICKET_CATEGORY_ID)
-    if not category:
-        return await interaction.response.send_message("Η job ticket κατηγορία δεν βρέθηκε.", ephemeral=True)
+        category = guild.get_channel(JOB_TICKET_CATEGORY_ID)
+        if not category:
+            return await interaction.response.send_message("Η job ticket κατηγορία δεν βρέθηκε.", ephemeral=True)
 
-    overwrites = {
-        guild.default_role: discord.PermissionOverwrite(view_channel=False),
-        author: discord.PermissionOverwrite(view_channel=True, send_messages=True, read_message_history=True),
-    }
+        overwrites = {
+            guild.default_role: discord.PermissionOverwrite(view_channel=False),
+            author: discord.PermissionOverwrite(view_channel=True, send_messages=True, read_message_history=True),
+        }
 
-    if self.values[0] == "Civilian Job":
-        roles_ids = [JOBORG_ID]
-        name = f"civilian-{author.name}".replace(" ", "-").lower()
-        ticket_type = "Civilian Job"
+        if self.values[0] == "Civilian Job":
+            roles_ids = [JOBORG_ID]
+            name = f"civilian-{author.name}".replace(" ", "-").lower()
+            ticket_type = "Civilian Job"
+        else:
+            roles_ids = [JOBORG_ID]
+            name = f"criminal-{author.name}".replace(" ", "-").lower()
+            ticket_type = "Criminal Job"
 
-    else:
-        roles_ids = [JOBORG_ID]
-        name = f"criminal-{author.name}".replace(" ", "-").lower()
-        ticket_type = "Criminal Job"
+        for rid in roles_ids:
+            role = guild.get_role(rid)
+            if role:
+                overwrites[role] = discord.PermissionOverwrite(
+                    view_channel=True, send_messages=True, read_message_history=True
+                )
 
-    for rid in roles_ids:
-        role = guild.get_role(rid)
-        if role:
-            overwrites[role] = discord.PermissionOverwrite(
-                view_channel=True, send_messages=True, read_message_history=True
-            )
-
-    channel = await guild.create_text_channel(
-        name=name,
-        category=category,
-        overwrites=overwrites,
-        reason=f"Job ticket created by {author} ({ticket_type})"
-    )
-
-    embed = discord.Embed(
-        title=f"🎫 Ticket από {author.name}",
-        description=f"{author.mention} άνοιξε **{ticket_type}**.\n"
-                    f"Παρακαλώ περιμένετε να σας εξυπηρετήσει ένας Manager.",
-        color=discord.Color.gray()
-    )
-
-    await channel.send(embed=embed, view=TicketCloseView())
-
-    # -------------------------
-    # LOGGING (ΜΕΣΑ στο callback)
-    # -------------------------
-    log_channel = guild.get_channel(TICKET_LOG_ID)
-    if log_channel:
-        log_embed = discord.Embed(
-            title="📂 Νέο Ticket",
-            description=f"Ο χρήστης {author.mention} άνοιξε ticket.",
-            color=discord.Color.blue()
+        channel = await guild.create_text_channel(
+            name=name,
+            category=category,
+            overwrites=overwrites,
+            reason=f"Job ticket created by {author} ({ticket_type})"
         )
-        log_embed.add_field(name="Τύπος", value=ticket_type)
-        log_embed.add_field(name="Channel", value=channel.mention)
 
-        await log_channel.send(embed=log_embed)
+        embed = discord.Embed(
+            title=f"🎫 Ticket από {author.name}",
+            description=f"{author.mention} άνοιξε **{ticket_type}**.\n"
+                        f"Παρακαλώ περιμένετε να σας εξυπηρετήσει ένας Manager.",
+            color=discord.Color.gray()
+        )
 
-    # -------------------------
-    # ΤΕΛΙΚΟ ΜΗΝΥΜΑ
-    # -------------------------
-    await interaction.response.send_message(
-        f"Το job ticket σου δημιουργήθηκε: {channel.mention}",
-        ephemeral=True
-    )
+        await channel.send(embed=embed, view=TicketCloseView())
+
+        # LOGGING
+        log_channel = guild.get_channel(TICKET_LOG_ID)
+        if log_channel:
+            log_embed = discord.Embed(
+                title="📂 Νέο Ticket",
+                description=f"Ο χρήστης {author.mention} άνοιξε ticket.",
+                color=discord.Color.blue()
+            )
+            log_embed.add_field(name="Τύπος", value=ticket_type)
+            log_embed.add_field(name="Channel", value=channel.mention)
+
+            await log_channel.send(embed=log_embed)
+
+        await interaction.response.send_message(
+            f"Το job ticket σου δημιουργήθηκε: {channel.mention}",
+            ephemeral=True
+        )
 # -------------------------------
 # DARK NEON JOB PANEL (NO DUTY BUTTONS)
 # -------------------------------
