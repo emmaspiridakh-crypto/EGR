@@ -451,7 +451,7 @@ class MainTicketSelect(discord.ui.Select):
             options=options,
             min_values=1,
             max_values=1
-
+        ) 
 
     async def callback(self, interaction: discord.Interaction):
         guild = interaction.guild
