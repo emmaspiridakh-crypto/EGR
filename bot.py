@@ -510,7 +510,7 @@ if log_channel:
     await log_channel.send(embed=log_embed)
 
 await interaction.response.send_message(
-    f"Το ticket σου δημιουργήθηκε: {channel.mention}",
+    f"Το job ticket σου δημιουργήθηκε: {channel.mention}",
     ephemeral=True
 )
 
@@ -620,7 +620,7 @@ if log_channel:
     await log_channel.send(embed=log_embed)
 
 await interaction.response.send_message(
-    f"Το ticket σου δημιουργήθηκε: {channel.mention}",
+    f"Το job ticket σου δημιουργήθηκε: {channel.mention}",
     ephemeral=True
 )
 # -------------------------------
